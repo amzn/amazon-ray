@@ -21,8 +21,8 @@ def set_resource(resource_name, capacity, node_id=None):
         None
 
     Raises:
-          ValueError: This exception is raised when a non-negative capacity is
-            specified.
+          ValueError: This exception is raised when a negative or non-integer
+          capacity is specified.
     """
     if node_id is not None:
         node_id_obj = ray.NodeID(ray.utils.hex_to_binary(node_id))
