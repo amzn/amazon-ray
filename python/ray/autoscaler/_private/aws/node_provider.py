@@ -428,11 +428,15 @@ class AWSNodeProvider(NodeProvider):
                         exc)
         return created_nodes_dict
 
+        # TODO: Idempotently correct CloudWatch setup errors on cached nodes?
         node_ids = [n.id for n in created]
         # check if user specifies a cloudwatch agent config file path.
         # if so, install and run the agent
-        cloudwatch_helper = CloudwatchHelper(self.provider_config, node_ids,
-                                             self.cluster_name)
+        cloudwatch_helper = CloudwatchHelper(
+            self.provider_config,
+            node_ids,
+            self.cluster_name,
+        )
         if cloudwatch_config_exists(self.provider_config, "agent", "config"):
             cloudwatch_helper.ssm_install_cloudwatch_agent()
 
