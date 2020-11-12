@@ -1,4 +1,5 @@
 import ray
+import copy
 import json
 from ray.tests.aws.utils.mocks import mock_path_exists_key_pair
 from ray.tests.aws.utils.constants import DEFAULT_INSTANCE_PROFILE, \
@@ -228,25 +229,38 @@ def put_cluster_dashboard_success(cloudwatch_client_stub, cloudwatch_helper):
     json_config_path = get_cloudwatch_dashboard_config_file_path()
     with open(json_config_path) as f:
         dashboard_config = json.load(f)
-    for node_id in cloudwatch_helper.node_ids:
-        for item in dashboard_config:
-            cloudwatch_helper._replace_all_config_variables(
-                item,
-                node_id,
-                cloudwatch_helper.cluster_name,
-            )
-            widgets.append(item)
-        cloudwatch_client_stub.add_response(
-            "put_dashboard",
-            expected_params={
-                "DashboardName": "example-dashboard-name",
-                "DashboardBody": json.dumps({
-                    "widgets": widgets
-                })
-            },
-            service_response={"ResponseMetadata": {
-                "HTTPStatusCode": 200
-            }})
+
+    for item in dashboard_config:
+        cloudwatch_helper._replace_all_config_variables(
+            item,
+            None,
+            cloudwatch_helper.cluster_name,
+            cloudwatch_helper.provider_config["region"],
+        )
+        for node_id in cloudwatch_helper.node_ids:
+            item_out = copy.deepcopy(item)
+            (item_out, modified_str_count) = \
+                cloudwatch_helper._replace_all_config_variables(
+                    item_out,
+                    str(node_id),
+                    None,
+                    None,
+                )
+            widgets.append(item_out)
+            if not modified_str_count:
+                break
+
+    cloudwatch_client_stub.add_response(
+        "put_dashboard",
+        expected_params={
+            "DashboardName": "example-dashboard-name",
+            "DashboardBody": json.dumps({
+                "widgets": widgets
+            })
+        },
+        service_response={"ResponseMetadata": {
+            "HTTPStatusCode": 200
+        }})
 
 
 def put_cluster_alarms_success(cloudwatch_client_stub, cloudwatch_helper):
@@ -255,14 +269,16 @@ def put_cluster_alarms_success(cloudwatch_client_stub, cloudwatch_helper):
         data = json.load(f)
     for node_id in cloudwatch_helper.node_ids:
         for item in data:
+            item_out = copy.deepcopy(item)
             cloudwatch_helper._replace_all_config_variables(
-                item,
+                item_out,
                 node_id,
                 cloudwatch_helper.cluster_name,
+                cloudwatch_helper.provider_config["region"],
             )
             cloudwatch_client_stub.add_response(
                 "put_metric_alarm",
-                expected_params=item,
+                expected_params=item_out,
                 service_response={"ResponseMetadata": {
                     "HTTPStatusCode": 200
                 }})
