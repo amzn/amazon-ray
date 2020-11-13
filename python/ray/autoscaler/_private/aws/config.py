@@ -19,14 +19,12 @@ from ray.autoscaler._private.cli_logger import cli_logger, cf
 from ray.autoscaler._private.event_system import (CreateClusterEvent,
                                                   global_event_system)
 from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper import \
-    cloudwatch_config_exists
+    CloudwatchHelper as cwh
 
 logger = logging.getLogger(__name__)
 
 RAY = "ray-autoscaler"
 DEFAULT_RAY_INSTANCE_PROFILE = RAY + "-v1"
-CLOUDWATCH_RAY_INSTANCE_PROFILE = RAY + "-cloudwatch-v1"
-CLOUDWATCH_RAY_IAM_ROLE = RAY + "-cloudwatch-v1"
 DEFAULT_RAY_IAM_ROLE = RAY + "-v1"
 SECURITY_GROUP_TEMPLATE = RAY + "-{}"
 
@@ -282,9 +280,10 @@ def _configure_iam_role(config):
         return config
     _set_config_info(head_instance_profile_src="default")
 
-    cwa_cfg_exists = cloudwatch_config_exists(config, "agent", "config")
-    instance_profile_name = CLOUDWATCH_RAY_INSTANCE_PROFILE if cwa_cfg_exists \
-        else DEFAULT_RAY_INSTANCE_PROFILE
+    instance_profile_name = cwh.resolve_instance_profile_name(
+        config,
+        DEFAULT_RAY_INSTANCE_PROFILE,
+    )
     profile = _get_instance_profile(instance_profile_name, config)
 
     if profile is None:
@@ -302,8 +301,7 @@ def _configure_iam_role(config):
     assert profile is not None, "Failed to create instance profile"
 
     if not profile.roles:
-        role_name = CLOUDWATCH_RAY_IAM_ROLE if cwa_cfg_exists \
-            else DEFAULT_RAY_IAM_ROLE
+        role_name = cwh.resolve_iam_role_name(config, DEFAULT_RAY_IAM_ROLE)
         role = _get_role(role_name, config)
         if role is None:
             cli_logger.verbose(
@@ -322,13 +320,11 @@ def _configure_iam_role(config):
                     },
                 ]
             }
-            attach_policy_arns = [
-                "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-                "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-            ]
-
-            if cwa_cfg_exists:
-                _add_cloudwatch_agent_policies(policy_doc, attach_policy_arns)
+            attach_policy_arns = cwh.resolve_policy_arns(
+                config, [
+                    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+                    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+                ])
 
             iam.create_role(
                 RoleName=role_name,
@@ -836,24 +832,3 @@ def _resource(name, config):
     region = config["provider"]["region"]
     aws_credentials = config["provider"].get("aws_credentials", {})
     return resource_cache(name, region, **aws_credentials)
-
-
-def _add_cloudwatch_agent_policies(policy_doc, attach_policy_arns):
-    policy_doc["Statement"].extend([{
-        "Action": "sts:AssumeRole",
-        "Effect": "Allow",
-        "Principal": {
-            "Service": "s3.amazonaws.com"
-        }
-    }, {
-        "Action": "sts:AssumeRole",
-        "Effect": "Allow",
-        "Principal": {
-            "Service": "logs.amazonaws.com"
-        },
-        "Sid": ""
-    }])
-    attach_policy_arns.extend([
-        "arn:aws:iam::aws:policy/CloudWatchFullAccess",
-        "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
-    ])
