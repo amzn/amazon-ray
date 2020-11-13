@@ -9,6 +9,9 @@ from ray.autoscaler.aws.utils import client_cache
 logger = logging.getLogger(__name__)
 
 CWA_CONFIG_SSM_PARAM_NAME = "ray_cloudwatch_agent_config"
+RAY = "ray-autoscaler"
+CLOUDWATCH_RAY_INSTANCE_PROFILE = RAY + "-cloudwatch-v1"
+CLOUDWATCH_RAY_IAM_ROLE = RAY + "-cloudwatch-v1"
 
 
 class CloudwatchHelper:
@@ -20,6 +23,34 @@ class CloudwatchHelper:
         self.ec2_client = client_cache("ec2", region)
         self.ssm_client = client_cache("ssm", region)
         self.cloudwatch_client = client_cache("cloudwatch", region)
+
+    def setup_from_config(self):
+        # check if user specified a cloudwatch agent config file path.
+        # if so, install and start cloudwatch agent
+        if CloudwatchHelper.cloudwatch_config_exists(
+                self.provider_config,
+                "agent",
+                "config",
+        ):
+            self.ssm_install_cloudwatch_agent()
+
+        # check if user specified a cloudwatch dashboard config file path.
+        # if so, put cloudwatch dashboard
+        if CloudwatchHelper.cloudwatch_config_exists(
+                self.provider_config,
+                "dashboard",
+                "config",
+        ):
+            self.put_cloudwatch_dashboard()
+
+        # check if user specified a cloudwatch alarm config file path.
+        # if so, put cloudwatch alarms
+        if CloudwatchHelper.cloudwatch_config_exists(
+                self.provider_config,
+                "alarm",
+                "config",
+        ):
+            self.put_cloudwatch_alarm()
 
     def ssm_install_cloudwatch_agent(self):
         """Install and Start CloudWatch Agent via Systems Manager (SSM)"""
@@ -349,12 +380,46 @@ class CloudwatchHelper:
             data = json.load(f)
         return data
 
+    @staticmethod
+    def resolve_instance_profile_name(config, default_instance_profile_name):
+        cwa_cfg_exists = CloudwatchHelper.cloudwatch_config_exists(
+            config,
+            "agent",
+            "config",
+        )
+        return CLOUDWATCH_RAY_INSTANCE_PROFILE if cwa_cfg_exists \
+            else default_instance_profile_name
 
-def cloudwatch_config_exists(config, section_name, file_name):
-    """check if cloudwatch config file exists"""
+    @staticmethod
+    def resolve_iam_role_name(config, default_iam_role_name):
+        cwa_cfg_exists = CloudwatchHelper.cloudwatch_config_exists(
+            config,
+            "agent",
+            "config",
+        )
+        return CLOUDWATCH_RAY_IAM_ROLE if cwa_cfg_exists \
+            else default_iam_role_name
 
-    cfg = config.get("cloudwatch", {}).get(section_name, {}).get(file_name)
-    if cfg:
-        assert os.path.isfile(cfg), \
-            "Invalid CloudWatch Config File Path: {}".format(cfg)
-    return bool(cfg)
+    @staticmethod
+    def resolve_policy_arns(config, default_policy_arns):
+        cwa_cfg_exists = CloudwatchHelper.cloudwatch_config_exists(
+            config,
+            "agent",
+            "config",
+        )
+        if cwa_cfg_exists:
+            default_policy_arns.extend([
+                "arn:aws:iam::aws:policy/CloudWatchFullAccess",
+                "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+            ])
+        return default_policy_arns
+
+    @staticmethod
+    def cloudwatch_config_exists(config, section_name, file_name):
+        """check if cloudwatch config file exists"""
+
+        cfg = config.get("cloudwatch", {}).get(section_name, {}).get(file_name)
+        if cfg:
+            assert os.path.isfile(cfg), \
+                "Invalid CloudWatch Config File Path: {}".format(cfg)
+        return bool(cfg)
