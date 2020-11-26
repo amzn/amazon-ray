@@ -56,6 +56,9 @@ nvm use "$NODE_VERSION"
 # Build the dashboard so its static assets can be included in the wheel.
 # TODO(mfitton): switch this back when deleting old dashboard code.
 pushd python/ray/new_dashboard/client
+  # Python >= 3.5.0 is required to successfully rebuild node-gyp.
+  echo "Setting npm config python path to /opt/python/${PYTHONS[0]}/bin/python"
+  npm config set python "/opt/python/${PYTHONS[0]}/bin/python"
   npm ci
   npm run build
 popd
