@@ -8,7 +8,7 @@ from ray.tests.aws.utils.helpers import \
     get_cloudwatch_dashboard_config_file_path,\
     get_cloudwatch_alarm_config_file_path
 from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper import \
-    CWA_CONFIG_SSM_PARAM_NAME
+    CWA_CONFIG_SSM_PARAM_NAME_BASE
 
 from unittest import mock
 
@@ -175,11 +175,15 @@ def get_command_invocation_success(ssm_client_stub, node_ids):
             service_response={"Status": "Success"})
 
 
-def put_parameter_cloudwatch_agent_config(ssm_client_stub):
+def put_parameter_cloudwatch_agent_config(ssm_client_stub, cluster_name):
+    cwa_config_ssm_param_name = "{}_{}".format(
+        CWA_CONFIG_SSM_PARAM_NAME_BASE,
+        cluster_name,
+    )
     ssm_client_stub.add_response(
         "put_parameter",
         expected_params={
-            "Name": CWA_CONFIG_SSM_PARAM_NAME,
+            "Name": cwa_config_ssm_param_name,
             "Type": "String",
             "Value": ANY,
             "Overwrite": True
@@ -217,7 +221,9 @@ def send_command_start_cwa(ssm_client_stub, node_ids):
                 "action": ["configure"],
                 "mode": ["ec2"],
                 "optionalConfigurationSource": ["ssm"],
-                "optionalConfigurationLocation": [CWA_CONFIG_SSM_PARAM_NAME],
+                "optionalConfigurationLocation": [
+                    CWA_CONFIG_SSM_PARAM_NAME_BASE
+                ],
                 "optionalRestart": ["yes"]
             }
         },

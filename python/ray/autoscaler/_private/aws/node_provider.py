@@ -383,19 +383,13 @@ class AWSNodeProvider(NodeProvider):
                     conf["SubnetId"] = subnet_id
                     cli_logger_tags["subnet_id"] = subnet_id
 
-                cli_logger.old_info(
-                    logger, "NodeProvider: calling create_instances "
-                    "with {} (count={}).", cli_logger_tags, count)
-
                 created = self.ec2_fail_fast.create_instances(**conf)
                 created_nodes_dict = {n.id: n for n in created}
 
                 # todo: timed?
                 # todo: handle plurality?
                 with cli_logger.group(
-                        "Launched {} nodes",
-                        count,
-                        _tags=cli_logger_tags):
+                        "Launched {} nodes", count, _tags=cli_logger_tags):
                     for instance in created:
                         # NOTE(maximsmol): This is needed for mocking
                         # boto3 for tests. This is likely a bug in moto
