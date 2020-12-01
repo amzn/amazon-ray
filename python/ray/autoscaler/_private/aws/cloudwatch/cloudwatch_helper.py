@@ -4,11 +4,11 @@ import json
 import os
 import logging
 import time
-from ray.autoscaler.aws.utils import client_cache
+from ray.autoscaler._private.aws.utils import client_cache
 
 logger = logging.getLogger(__name__)
 
-CWA_CONFIG_SSM_PARAM_NAME = "ray_cloudwatch_agent_config"
+CWA_CONFIG_SSM_PARAM_NAME_BASE = "ray_cloudwatch_agent_config"
 RAY = "ray-autoscaler"
 CLOUDWATCH_RAY_INSTANCE_PROFILE = RAY + "-cloudwatch-v1"
 CLOUDWATCH_RAY_IAM_ROLE = RAY + "-cloudwatch-v1"
@@ -105,8 +105,12 @@ class CloudwatchHelper:
             self.cluster_name,
             self.provider_config["region"],
         )
+        cwa_config_ssm_param_name = "{}_{}".format(
+            CWA_CONFIG_SSM_PARAM_NAME_BASE,
+            self.cluster_name,
+        )
         self.ssm_client.put_parameter(
-            Name=CWA_CONFIG_SSM_PARAM_NAME,
+            Name=cwa_config_ssm_param_name,
             Type="String",
             Value=json.dumps(cwa_config),
             Overwrite=True,
@@ -133,7 +137,7 @@ class CloudwatchHelper:
             "action": ["configure"],
             "mode": ["ec2"],
             "optionalConfigurationSource": ["ssm"],
-            "optionalConfigurationLocation": [CWA_CONFIG_SSM_PARAM_NAME],
+            "optionalConfigurationLocation": [cwa_config_ssm_param_name],
             "optionalRestart": ["yes"],
         }
         self._ssm_command_waiter(
@@ -293,8 +297,8 @@ class CloudwatchHelper:
                         response = self._send_command_to_nodes(
                             document_name, parameters, node_id)
                         command_id = response["Command"]["CommandId"]
-                        logger.info("Sent SSM command ID {} to node {}".format(
-                            command_id, node_id))
+                        logger.debug("Sent SSM command ID {} to node {}"
+                                     .format(command_id, node_id))
                 time.sleep(delay_seconds)
 
     def _replace_config_variables(self, string, node_id, cluster_name, region):

@@ -129,7 +129,10 @@ def test_cloudwatch_agent_setup(ec2_client_stub, ssm_client_stub):
     stubs.get_command_invocation_success(ssm_client_stub, node_ids)
     # given a successful CloudWatch Agent install on all nodes...
     # expect to store the CloudWatch Agent config as an SSM parameter
-    stubs.put_parameter_cloudwatch_agent_config(ssm_client_stub)
+    stubs.put_parameter_cloudwatch_agent_config(
+        ssm_client_stub,
+        cloudwatch_helper.cluster_name,
+    )
     # given a successful CloudWatch Agent install on all nodes...
     # expect to send a command to satisfy CWA collectd preconditions via SSM
     stubs.send_command_cwa_collectd_setup_script(ssm_client_stub, node_ids)
