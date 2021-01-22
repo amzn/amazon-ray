@@ -42,3 +42,14 @@ setup_commands:
     # libcudnn8=8.0.5.39-1+cuda11.0
     - pip install tensorflow-gpu==2.3.0
     - pip install -U {{env["RAY_WHEEL"]}}
+
+worker_setup_commands: []
+
+head_start_ray_commands:
+    - ray stop
+    - ulimit -n 65536; OMP_NUM_THREADS=1 ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
+
+worker_start_ray_commands:
+    - ray stop
+    - ulimit -n 65536; OMP_NUM_THREADS=1 ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
+>>>>>>> bc4dc8690 (Initial amzn-ray updates to github settings, wheel URLs, repo references, package info, and documentation.)

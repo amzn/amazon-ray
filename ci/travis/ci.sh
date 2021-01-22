@@ -100,7 +100,7 @@ upload_wheels() {
     local remote_dir
     for remote_dir in latest "${branch}/${commit}"; do
       if command -V aws; then
-        aws s3 sync --acl public-read --no-progress "${local_dir}" "s3://ray-wheels/${remote_dir}"
+        aws s3 sync --no-progress "${local_dir}" "s3://ray-amzn-wheels/${remote_dir}"
       fi
     done
   fi

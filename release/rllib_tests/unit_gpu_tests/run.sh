@@ -10,7 +10,7 @@ pip install terminado
 pip install torch>=1.6 torchvision
 pip install -U tensorflow-gpu
 
-git clone https://github.com/ray-project/ray.git ray
+git clone https://github.com/amzn/amazon-ray.git ray
 pushd ray || true
 git checkout "$cob"
 
