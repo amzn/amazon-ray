@@ -99,7 +99,7 @@ class FiberState {
                   RAY_LOG(ERROR)
                       << "Async actor fiber channel returned unexpected error code, "
                       << "shutting down the worker thread. Please submit a github issue "
-                      << "at https://github.com/ray-project/ray";
+                      << "at https://github.com/amzn/amazon-ray";
                   return;
                 }
               }
