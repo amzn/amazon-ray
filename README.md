@@ -28,9 +28,9 @@ Latest stable EC2 AMIs with Amazon Ray wheels pre-installed:
 
 | Ray Wheel                                                                                                         | Base AMI                                     | AMI ID                | Region    |
 |-------------------------------------------------------------------------------------------------------------------|----------------------------------------------|-----------------------|-----------|
-| [Linux Python 3.6](http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-021a4a9fecf0763a0 | us-east-1 |
-| [Linux Python 3.7](http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0583d277a9128066a | us-east-1 |
-| [Linux Python 3.8](http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0f6490d5c89ecaaaf | us-east-1 |
+| [Linux Python 3.6](http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0095155f961822d06 | us-east-1 |
+| [Linux Python 3.7](http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-07c038bfbb0b26d70 | us-east-1 |
+| [Linux Python 3.8](http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-049f1b39a4765dbe5 | us-east-1 |
 
 All of the above AMIs have passed unit tests and EC2 cluster integration tests. To use any of the above AMIs,
 first ensure that you're launching your Ray EC2 cluster in the same region as the AMI, then specify the AMI ID
@@ -44,16 +44,12 @@ provider:
 
 head_node:
   InstanceType: r5n.xlarge 
-  ImageId: ami-0583d277a9128066a
+  ImageId: ami-07c038bfbb0b26d70
 
 worker_nodes:
   InstanceType: r5n.2xlarge 
-  ImageId: ami-0583d277a9128066a
+  ImageId: ami-07c038bfbb0b26d70
 ```
-
-> Note that the Python 3.6 and 3.7 Ray wheels are installed in the default conda environment, while the Python 3.8
-> Ray wheel is installed in the `ray_cp38` conda environment. This environment can be activated by running
-> `conda activate ray_cp38`.
 
 #### CloudWatch Integration
 Each AMI also comes with the
@@ -100,10 +96,10 @@ the AMI's Ray wheel Python version:
         "logs:DescribeLogGroups"
       ],
       "Resource": [
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-andes-ray-cp{CP_VERSION}-manylinux--ray_logs_out:*",
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-andes-ray-cp{CP_VERSION}-manylinux--ray_logs_err:*",
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-andes-ray-cp{CP_VERSION}-manylinux--ray_user_logs_debug:*",
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-andes-ray-cp{CP_VERSION}-manylinux--ray_user_logs_info:*"
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_logs_out:*",
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_logs_err:*",
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_user_logs_debug:*",
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_user_logs_info:*"
       ]
     }
   ]
@@ -119,7 +115,7 @@ aws logs tail $log_group_name --follow
 ```
 
 To disable the CloudWatch Unified Agent at cluster launch time, simply add the following setup command to your autoscaler
-config YAML:
+config:
 
 ```yaml
 setup_commands:
