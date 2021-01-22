@@ -10,7 +10,6 @@ BASE_IMAGE="ubuntu:focal"
 WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-1.9.2-cp37-cp37m-manylinux2014_x86_64.whl"
 PYTHON_VERSION="3.7.7"
 
-
 while [[ $# -gt 0 ]]
 do
 key="$1"

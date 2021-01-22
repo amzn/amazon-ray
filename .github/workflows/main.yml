@@ -47,12 +47,12 @@ jobs:
       uses: actions/checkout@v1
     - name: Configure AWS Credentials
       continue-on-error: true
-      if: github.repository == 'ray-project/ray' && github.event_name != 'pull_request'
+      if: github.repository == 'amzn/amazon-ray' && github.event_name != 'pull_request'
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.GHA_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.GHA_AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
+        aws-region: us-east-1
     - name: Prepare caching
       id: info
       shell: bash
@@ -95,7 +95,7 @@ jobs:
         }
         trap clean_up EXIT
 
-        python -u ci/remote-watch.py --skip_repo=ray-project/ray &
+        python -u ci/remote-watch.py --skip_repo=amzn/amazon-ray &
         . ./ci/travis/ci.sh init
         . ./ci/travis/ci.sh build
         . ./ci/travis/ci.sh upload_wheels || true

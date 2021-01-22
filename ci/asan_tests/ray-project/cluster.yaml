@@ -39,7 +39,7 @@ setup_commands:
     - conda uninstall -y terminado || true
     - pip install terminado || true
     # Clone Ray.
-    - cd $HOME; rm -rf $HOME/ray; git clone https://github.com/ray-project/ray || true
+    - cd $HOME; rm -rf $HOME/ray; git clone https://github.com/amzn/amazon-ray || true
     # Install Node.js in order to build the dashboard.
     - curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash
     - sudo apt-get install -y nodejs || true

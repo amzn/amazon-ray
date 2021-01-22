@@ -2,7 +2,7 @@
 # shellcheck disable=SC2046
 cob="$1"
 
-git clone https://github.com/ray-project/ray.git ray
+git clone https://github.com/amzn/amazon-ray.git ray
 pushd ray || true
 git checkout "$cob"
 
