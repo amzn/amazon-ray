@@ -7,9 +7,8 @@ set -x
 
 GPU=""
 BASE_IMAGE="ubuntu:focal"
-WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-1.3.0-cp37-cp37m-manylinux2014_x86_64.whl"
+WHEEL_URL="http://d168575n8y1h5x.cloudfront.net/latest/ray-1.3.0-cp37-cp37m-manylinux2014_x86_64.whl"
 PYTHON_VERSION="3.7.7"
-
 
 while [[ $# -gt 0 ]]
 do

@@ -35,3 +35,16 @@ file_mounts_sync_continuously: false
 
 setup_commands:
    - pip install -U {{env["RAY_WHEEL"]}}
+
+# Command to start ray on the head node. You don't need to change this.
+head_start_ray_commands:
+    - ray stop
+    - export RAY_BACKEND_LOG_LEVEL=debug
+    - ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
+
+# Command to start ray on worker nodes. You don't need to change this.
+worker_start_ray_commands:
+    - ray stop
+    - export RAY_BACKEND_LOG_LEVEL=debug
+    - ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
+>>>>>>> 32a42f5d7 (Initial amzn-ray updates to github settings, wheel URLs, repo references, package info, and documentation.)
