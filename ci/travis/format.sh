@@ -312,7 +312,7 @@ elif [ "${1-}" == '--all' ]; then
 else
     # Add the upstream remote if it doesn't exist
     if ! git remote -v | grep -q upstream; then
-        git remote add 'upstream' 'https://github.com/ray-project/ray.git'
+        git remote add 'upstream' 'https://github.com/amzn/amazon-ray.git'
     fi
 
     # Only fetch master since that's the branch we're diffing against.

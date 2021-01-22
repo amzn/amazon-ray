@@ -48,7 +48,7 @@ echo "commit: $commit"
 echo "branch: $ray_branch"
 echo "workload: $workload"
 
-wheel="https://s3-us-west-2.amazonaws.com/ray-wheels/$ray_branch/$commit/ray-$ray_version-cp37-cp37m-manylinux2014_x86_64.whl"
+wheel="http://d168575n8y1h5x.cloudfront.net/$ray_branch/$commit/ray-$ray_version-cp37-cp37m-manylinux2014_x86_64.whl"
 
 # Serve load testing tool
 cur_dir=$(pwd)

@@ -91,8 +91,13 @@ file_mounts: {
 # List of shell commands to run to set up nodes.
 # NOTE: rayproject/ray:latest has ray latest bundled
 setup_commands: []
+<<<<<<< HEAD
     # - pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-2.0.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl
     # - pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-2.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl
+=======
+    # - pip install -U http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl
+    # - pip install -U http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl
+>>>>>>> Initial amzn-ray updates to github settings, wheel URLs, repo references, package info, and documentation.
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
