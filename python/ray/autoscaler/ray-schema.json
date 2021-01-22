@@ -1,6 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
-	"$id": "http://github.com/ray-project/ray/python/ray/autoscaler/ray-schema.json",
+	"$id": "http://github.com/amzn/amazon-ray/python/ray/autoscaler/ray-schema.json",
 	"title": "Ray AutoScaler",
 	"description": "Ray autoscaler schema",
 	"type": "object",
