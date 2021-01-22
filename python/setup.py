@@ -419,19 +419,21 @@ if __name__ == "__main__":
 
 
 setuptools.setup(
-    name="ray",
+    name="amzn-ray",
     version=find_version("ray", "__init__.py"),
-    author="Ray Team",
-    author_email="ray-dev@googlegroups.com",
-    description=("Ray provides a simple, universal API for building "
-                 "distributed applications."),
+    author="Amazon Ray Team",
+    author_email="amzn-ray-team@amazon.com",
+    description=("Staging area for ongoing enhancements to Ray focused on "
+                 "improving its integration with AWS and other Amazon "
+                 "technologies."),
     long_description=io.open(
-        os.path.join(ROOT_DIR, os.path.pardir, "README.rst"),
+        os.path.join(ROOT_DIR, os.path.pardir, "README.md"),
         "r",
         encoding="utf-8").read(),
-    url="https://github.com/ray-project/ray",
-    keywords=("ray distributed parallel machine-learning hyperparameter-tuning"
-              "reinforcement-learning deep-learning serving python"),
+    url="https://github.com/amzn/amazon-ray",
+    keywords=("ray distributed parallel machine-learning "
+              "hyperparameter-tuning reinforcement-learning deep-learning "
+              "serving python amazon aws"),
     packages=setuptools.find_packages(),
     cmdclass={"build_ext": build_ext},
     # The BinaryDistribution argument triggers build_ext.

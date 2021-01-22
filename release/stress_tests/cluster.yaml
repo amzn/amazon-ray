@@ -76,13 +76,17 @@ setup_commands:
     # - sudo apt-get -qq update
     # - sudo apt-get install -y build-essential curl unzip
     # # Build Ray.
-    # - git clone https://github.com/ray-project/ray || true
+    # - git clone https://github.com/amzn/amazon-ray || true
     # - ray/ci/travis/install-bazel.sh
     - pip install -U pip
     - pip install terminado
     - pip install boto3==1.4.8 cython==0.29.0
     # - cd ray/python; git checkout master; git pull; pip install -e . --verbose
+<<<<<<< HEAD
     - "pip install https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-2.0.0.dev0-cp38-cp38-manylinux2014_x86_64.whl"
+=======
+    - "pip install http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp38-cp38-manylinux2014_x86_64.whl"
+>>>>>>> Initial amzn-ray updates to github settings, wheel URLs, repo references, package info, and documentation.
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
 
