@@ -1,4 +1,4 @@
-<!-- Thank you for your contribution! Please review https://github.com/ray-project/ray/blob/master/CONTRIBUTING.rst before opening a pull request. -->
+<!-- Thank you for your contribution! Please review https://github.com/amzn/amazon-ray/blob/master/CONTRIBUTING.md before opening a pull request. -->
 
 <!-- Please add a reviewer to the assignee section when you create a PR. If you don't have the access to it, we will shortly find a reviewer and assign them to your PR. -->
 
@@ -13,9 +13,13 @@
 ## Checks
 
 - [ ] I've run `scripts/format.sh` to lint the changes in this PR.
-- [ ] I've included any doc changes needed for https://docs.ray.io/en/master/.
-- [ ] I've made sure the tests are passing. Note that there might be a few flaky tests, see the recent failures at https://flakey-tests.ray.io/
+- [ ] I've included any doc changes needed.
+- [ ] I've made sure the tests are passing. Note that there might be a few flaky tests.
 - Testing Strategy
    - [ ] Unit tests
    - [ ] Release tests
    - [ ] This PR is not tested :(
+
+## License
+
+By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.

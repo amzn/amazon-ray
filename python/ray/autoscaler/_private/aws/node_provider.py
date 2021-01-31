@@ -242,8 +242,15 @@ class AWSNodeProvider(NodeProvider):
                     }],
                 )
 
-    def create_node(self, node_config, tags, count):
+    def create_node(self, node_config, tags, count) -> Dict[str, Any]:
+        """Creates instances.
+
+        Returns dict mapping instance id to ec2.Instance object for the created
+        instances.
+        """
         tags = copy.deepcopy(tags)
+
+        reused_nodes_dict = {}
         # Try to reuse previously stopped nodes with compatible configs
         if self.cache_stopped_nodes:
             # TODO(ekl) this is breaking the abstraction boundary a little by
@@ -276,6 +283,7 @@ class AWSNodeProvider(NodeProvider):
             reuse_nodes = list(
                 self.ec2.instances.filter(Filters=filters))[:count]
             reuse_node_ids = [n.id for n in reuse_nodes]
+            reused_nodes_dict = {n.id: n for n in reuse_nodes}
             if reuse_nodes:
                 cli_logger.print(
                     # todo: handle plural vs singular?
@@ -301,10 +309,17 @@ class AWSNodeProvider(NodeProvider):
                     self.set_node_tags(node_id, tags)
                 count -= len(reuse_node_ids)
 
+        created_nodes_dict = {}
         if count:
-            self._create_node(node_config, tags, count)
+            created_nodes_dict = self._create_node(node_config, tags, count)
+
+        all_created_nodes = reused_nodes_dict
+        all_created_nodes.update(created_nodes_dict)
+        return all_created_nodes
 
     def _create_node(self, node_config, tags, count):
+        created_nodes_dict = {}
+
         tags = to_aws_format(tags)
         conf = node_config.copy()
 
@@ -369,6 +384,7 @@ class AWSNodeProvider(NodeProvider):
                     cli_logger_tags["subnet_id"] = subnet_id
 
                 created = self.ec2_fail_fast.create_instances(**conf)
+                created_nodes_dict = {n.id: n for n in created}
 
                 # todo: timed?
                 # todo: handle plurality?
@@ -404,6 +420,12 @@ class AWSNodeProvider(NodeProvider):
                     cli_logger.print(
                         "create_instances: Attempt failed with {}, retrying.",
                         exc)
+        return created_nodes_dict
+
+        # TODO: Idempotently correct CloudWatch setup errors on cached nodes?
+        node_ids = [n.id for n in created]
+        CloudwatchHelper(self.provider_config, node_ids, self.cluster_name).\
+            setup_from_config()
 
         # TODO: Idempotently correct CloudWatch setup errors on cached nodes?
         node_ids = [n.id for n in created]

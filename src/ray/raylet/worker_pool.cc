@@ -159,9 +159,8 @@ Process WorkerPool::StartWorkerProcess(
     return Process();
   }
   // Either there are no workers pending registration or the worker start is being forced.
-  RAY_LOG(DEBUG) << "Starting new worker process, current pool has "
-                 << state.idle_actor.size() << " actor workers, and " << state.idle.size()
-                 << " non-actor workers";
+  RAY_LOG(DEBUG) << "Starting new worker process, current pool has " << state.idle.size()
+                 << " workers";
 
   int workers_to_start = 1;
   if (dynamic_options.empty()) {
@@ -625,15 +624,11 @@ void WorkerPool::PushWorker(const std::shared_ptr<WorkerInterface> &worker) {
     state.idle_dedicated_workers[task_id] = worker;
   } else {
     // The worker is not used for the actor creation task with dynamic options.
-    // Put the worker to the corresponding idle pool.
-    if (worker->GetActorId().IsNil()) {
-      state.idle.insert(worker);
-      int64_t now = current_time_ms();
-      idle_of_all_languages_.emplace_back(worker, now);
-      idle_of_all_languages_map_[worker] = now;
-    } else {
-      state.idle_actor[worker->GetActorId()] = worker;
-    }
+    // Put the worker to the idle pool.
+    state.idle.insert(worker);
+    int64_t now = current_time_ms();
+    idle_of_all_languages_.emplace_back(worker, now);
+    idle_of_all_languages_map_[worker] = now;
   }
 }
 
@@ -714,11 +709,11 @@ void WorkerPool::TryKillingIdleWorkers() {
     }
 
     for (const auto &worker : workers_in_the_same_process) {
-      RAY_LOG(INFO) << "The worker pool has " << running_size
-                    << " registered workers which exceeds the soft limit of "
-                    << num_workers_soft_limit_ << ", and worker " << worker->WorkerId()
-                    << " with pid " << process.GetId()
-                    << " has been idle for a a while. Kill it.";
+      RAY_LOG(DEBUG) << "The worker pool has " << running_size
+                     << " registered workers which exceeds the soft limit of "
+                     << num_workers_soft_limit_ << ", and worker " << worker->WorkerId()
+                     << " with pid " << process.GetId()
+                     << " has been idle for a a while. Kill it.";
       // To avoid object lost issue caused by forcibly killing, send an RPC request to the
       // worker to allow it to do cleanup before exiting.
       auto rpc_client = worker->rpc_client();
@@ -787,7 +782,10 @@ std::shared_ptr<WorkerInterface> WorkerPool::PopWorker(
         state.tasks_to_dedicated_workers[task_spec.TaskId()] = proc;
       }
     }
-  } else if (!task_spec.IsActorTask()) {
+  } else if (task_spec.IsActorTask()) {
+    // Code path of actor task.
+    RAY_CHECK(false) << "Direct call shouldn't reach here.";
+  } else {
     // Code path of normal task or actor creation task without dynamic worker options.
     // Find an available worker which is already assigned to this job.
     // Try to pop the most recently pushed worker.
@@ -811,14 +809,6 @@ std::shared_ptr<WorkerInterface> WorkerPool::PopWorker(
       // Start a new worker process.
       proc = StartWorkerProcess(task_spec.GetLanguage(), rpc::WorkerType::WORKER,
                                 task_spec.JobId());
-    }
-  } else {
-    // Code path of actor task.
-    const auto &actor_id = task_spec.ActorId();
-    auto actor_entry = state.idle_actor.find(actor_id);
-    if (actor_entry != state.idle_actor.end()) {
-      worker = std::move(actor_entry->second);
-      state.idle_actor.erase(actor_entry);
     }
   }
 
@@ -956,8 +946,8 @@ const std::vector<std::shared_ptr<WorkerInterface>> WorkerPool::GetAllRegistered
 }
 
 void WorkerPool::WarnAboutSize() {
-  for (const auto &entry : states_by_lang_) {
-    auto state = entry.second;
+  for (auto &entry : states_by_lang_) {
+    auto &state = entry.second;
     int64_t num_workers_started_or_registered = 0;
     num_workers_started_or_registered +=
         static_cast<int64_t>(state.registered_workers.size());

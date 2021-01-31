@@ -1,4 +1,4 @@
-workspace(name = "com_github_ray_project_ray")
+workspace(name = "com_github_amzn_amazon_ray")
 
 load("//bazel:ray_deps_setup.bzl", "ray_deps_setup")
 

@@ -1,6 +1,6 @@
 ---
 name: Feature request/Question
-about: For feature requests or questions, post on https://discuss.ray.io/ instead!
+about: Make a feature request or ask a question.
 title: ''
 labels: enhancement
 assignees: ''
@@ -10,5 +10,3 @@ assignees: ''
 <!--Please include [tune], [rllib], [autoscaler] etc. in the issue title if relevant-->
 
 ### Describe your feature request
-
-For feature requests or questions, post on our Discussion page instead: https://discuss.ray.io/
