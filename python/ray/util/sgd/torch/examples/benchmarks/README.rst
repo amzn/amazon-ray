@@ -93,7 +93,7 @@ Simple Instructions
 
 Note that these instructions are not maintained and may require a bit of wrangling to get working.
 
-First, ``git clone https://github.com/ray-project/ray && cd ray/python/ray/util/sgd/torch/examples/``.
+First, ``git clone https://github.com/amzn/amazon-ray && cd ray/python/ray/util/sgd/torch/examples/``.
 
 You can use ``sgd-development.yaml`` to setup your cluster configuration and ``ray up sgd-development.yaml`` to launch the cluster.
 
@@ -104,7 +104,6 @@ You can specify the number of nodes you want to use with the following configura
     # The maximum number of workers nodes to launch in addition to the head
     # node. This takes precedence over min_workers. min_workers default to 0.
     min_workers: <NUMBER_OF_NODES>  # Change this to a custom quantity
-    initial_workers:  <NUMBER_OF_NODES>  # same as above
     max_workers:  <NUMBER_OF_NODES>  # same as above
 
 You may want to install FP16 support for PyTorch with the following configuration in the YAML file:

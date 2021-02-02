@@ -1,6 +1,11 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      # Don't run CI for Dependabot branch pushes.
+      - "dependabot/**"
+  pull_request:
 
 env:
   # Git GITHUB_... variables are useful for translating Travis environment variables
@@ -42,12 +47,12 @@ jobs:
       uses: actions/checkout@v1
     - name: Configure AWS Credentials
       continue-on-error: true
-      if: github.repository == 'ray-project/ray' && github.event_name != 'pull_request'
+      if: github.repository == 'amzn/amazon-ray' && github.event_name != 'pull_request'
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.GHA_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.GHA_AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
+        aws-region: us-east-1
     - name: Prepare caching
       id: info
       shell: bash
@@ -73,22 +78,29 @@ jobs:
           pip-${{ runner.os }}-
           pip-
     - name: Run CI script
-      shell: bash -e -o pipefail -l {0}
+      shell: bash -x -e -o pipefail -l {0}
       env:
         BAZEL_CACHE_CREDENTIAL_B64: ${{ secrets.BAZEL_CACHE_CREDENTIAL_B64 }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        #LINUX_WHEELS: 1
-        #MAC_WHEELS: 1
         RAY_DEFAULT_BUILD: 1
         WINDOWS_WHEELS: 1
+        BAZEL_LOG_BUCKET_ACCESS_KEY: ${{ secrets.BAZEL_LOG_BUCKET_ACCESS_KEY }}
+        TRAVIS_BRANCH: ${{ github.ref	}}
+        TRAVIS_COMMIT: ${{ github.sha }}
+        TRAVIS_JOB_ID: ${{ github.run_id }}
       run: |
-        python -u ci/remote-watch.py --skip_repo=ray-project/ray &
+        function clean_up() {
+          echo "Performing cleanup"
+          if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then ./ci/travis/upload_build_info.sh; fi
+        }
+        trap clean_up EXIT
+
+        python -u ci/remote-watch.py --skip_repo=amzn/amazon-ray &
         . ./ci/travis/ci.sh init
         . ./ci/travis/ci.sh build
         . ./ci/travis/ci.sh upload_wheels || true
-        . ./ci/travis/ci.sh test_python
         . ./ci/travis/ci.sh test_core
-        . ./ci/travis/ci.sh test_wheels
+        . ./ci/travis/ci.sh test_python
     - name: Run Clang Include-What-You-Use
       continue-on-error: true
       if: runner.os == 'Linux'
