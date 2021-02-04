@@ -46,7 +46,7 @@ class NodeUpdater:
         rsync_options: Extra options related to the rsync command.
         process_runner: the module to use to run the commands
             in the CommandRunner. E.g., subprocess.
-        use_internal_ip: Wwhether the node_id belongs to an internal ip
+        use_internal_ip: Whether the node_id belongs to an internal ip
             or external ip.
         docker_config: Docker section of autoscaler yaml
         restart_only: Whether to skip setup commands & just restart ray
