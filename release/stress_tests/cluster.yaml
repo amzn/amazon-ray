@@ -85,7 +85,7 @@ setup_commands:
 <<<<<<< HEAD
     - "pip install https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-2.0.0.dev0-cp38-cp38-manylinux2014_x86_64.whl"
 =======
-    - "pip install http://d168575n8y1h5x.cloudfront.net/latest/ray-1.1.0.dev0-cp38-cp38-manylinux2014_x86_64.whl"
+    - "pip install http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.1.0.dev0-cp38-cp38-manylinux2014_x86_64.whl"
 >>>>>>> Initial amzn-ray updates to github settings, wheel URLs, repo references, package info, and documentation.
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
