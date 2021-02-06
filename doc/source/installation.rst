@@ -51,17 +51,17 @@ You can install the nightly Ray wheels via the following links. These daily rele
 `Linux Python 3.6`_  `MacOS Python 3.6`_  `Windows Python 3.6`_
 ===================  ===================  ======================
 
-.. _`Linux Python 3.8`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp38-cp38-manylinux2014_x86_64.whl
-.. _`Linux Python 3.7`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl
-.. _`Linux Python 3.6`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl
+.. _`Linux Python 3.8`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp38-cp38-manylinux2014_x86_64.whl
+.. _`Linux Python 3.7`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl
+.. _`Linux Python 3.6`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl
 
-.. _`MacOS Python 3.8`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp38-cp38-macosx_10_13_x86_64.whl
-.. _`MacOS Python 3.7`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp37-cp37m-macosx_10_13_intel.whl
-.. _`MacOS Python 3.6`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp36-cp36m-macosx_10_13_intel.whl
+.. _`MacOS Python 3.8`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp38-cp38-macosx_10_13_x86_64.whl
+.. _`MacOS Python 3.7`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp37-cp37m-macosx_10_13_intel.whl
+.. _`MacOS Python 3.6`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp36-cp36m-macosx_10_13_intel.whl
 
-.. _`Windows Python 3.8`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp38-cp38-win_amd64.whl
-.. _`Windows Python 3.7`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp37-cp37m-win_amd64.whl
-.. _`Windows Python 3.6`: http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp36-cp36m-win_amd64.whl
+.. _`Windows Python 3.8`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp38-cp38-win_amd64.whl
+.. _`Windows Python 3.7`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp37-cp37m-win_amd64.whl
+.. _`Windows Python 3.6`: http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp36-cp36m-win_amd64.whl
 
 
 Installing from a specific commit

@@ -164,7 +164,6 @@ setup_commands: []
     # that has the "nightly" (e.g. "rayproject/ray-ml:nightly-gpu") or uncomment the following line:
     # - pip install -U "ray[default] @ http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl"
 
-
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
   - pip install google-api-python-client==1.7.8

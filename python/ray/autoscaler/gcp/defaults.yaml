@@ -138,7 +138,6 @@ setup_commands:
     # Install ray if not present
     - which ray || pip install -U http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl
 
-
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
   - pip install google-api-python-client==1.7.8
