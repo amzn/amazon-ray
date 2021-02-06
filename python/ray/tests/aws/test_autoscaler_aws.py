@@ -123,10 +123,10 @@ def test_cloudwatch_agent_setup(ec2_client_stub, ssm_client_stub):
     stubs.describe_instance_status_ok(ec2_client_stub, node_ids)
     # given all cluster EC2 instance status checks passed...
     # expect to send a CloudWatch Agent install command to all nodes via SSM
-    stubs.send_command_cwa_install(ssm_client_stub, node_ids)
+    cmd_id = stubs.send_command_cwa_install(ssm_client_stub, node_ids)
     # given a CloudWatch Agent install command sent to all nodes...
     # expect to wait for the command to complete successfully on every node
-    stubs.get_command_invocation_success(ssm_client_stub, node_ids)
+    stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
     # given a successful CloudWatch Agent install on all nodes...
     # expect to store the CloudWatch Agent config as an SSM parameter
     stubs.put_parameter_cloudwatch_agent_config(
@@ -135,10 +135,17 @@ def test_cloudwatch_agent_setup(ec2_client_stub, ssm_client_stub):
     )
     # given a successful CloudWatch Agent install on all nodes...
     # expect to send a command to satisfy CWA collectd preconditions via SSM
-    stubs.send_command_cwa_collectd_setup_script(ssm_client_stub, node_ids)
+    cmd_id = stubs.send_command_cwa_collectd_init(ssm_client_stub, node_ids)
+    # given a CWA collectd precondition setup command sent to all nodes...
+    # expect to wait for the command to complete successfully on every node
+    stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
+
     # given that all CloudWatch Agent start preconditions are satisfied...
     # expect to send an SSM command to start CloudWatch Agent on all nodes
-    stubs.send_command_start_cwa(ssm_client_stub, node_ids)
+    cmd_id = stubs.send_command_start_cwa(ssm_client_stub, node_ids)
+    # given a SSM command to start CloudWatch Agent sent to all nodes...
+    # expect to wait for the command to complete successfully on every node
+    stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
 
     # given our mocks and the example CloudWatch Agent config as input...
     # expect CloudWatch Agent to be installed on each cluster node successfully

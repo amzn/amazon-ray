@@ -16,7 +16,8 @@ CLOUDWATCH_RAY_IAM_ROLE = RAY + "-cloudwatch-v1"
 
 class CloudwatchHelper:
     def __init__(self, provider_config, node_ids, cluster_name):
-        self.node_ids = set(node_ids)
+        # dedupe and sort node IDs to support deterministic unit test stubs
+        self.node_ids = sorted(list(set(node_ids)))
         self.cluster_name = cluster_name
         self.provider_config = provider_config
         region = provider_config["region"]
@@ -62,7 +63,7 @@ class CloudwatchHelper:
                 "installing CloudWatch Unified Agent. This may take a few "
                 "minutes...")
             waiter = self.ec2_client.get_waiter("instance_status_ok")
-            waiter.wait(InstanceIds=list(self.node_ids))
+            waiter.wait(InstanceIds=self.node_ids)
         except botocore.exceptions.WaiterError as e:
             logger.error(
                 "Failed while waiting for EC2 instance checks to complete: {}".
@@ -215,7 +216,7 @@ class CloudwatchHelper:
                      "Parameters: {}.".format(
                          len(node_ids), document_name, parameters))
         response = self.ssm_client.send_command(
-            InstanceIds=list(self.node_ids),
+            InstanceIds=self.node_ids,
             DocumentName=document_name,
             Parameters=parameters,
             MaxConcurrency=str(min(len(self.node_ids), 100)),
