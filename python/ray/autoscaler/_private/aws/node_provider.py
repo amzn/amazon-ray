@@ -420,12 +420,14 @@ class AWSNodeProvider(NodeProvider):
                     cli_logger.print(
                         "create_instances: Attempt failed with {}, retrying.",
                         exc)
-        return created_nodes_dict
 
         # TODO: Idempotently correct CloudWatch setup errors on cached nodes?
         node_ids = [n.id for n in created]
-        CloudwatchHelper(self.provider_config, node_ids, self.cluster_name).\
+        CloudwatchHelper(self.provider_config, node_ids, self.cluster_name). \
             setup_from_config()
+
+        return created_nodes_dict
+
 
     def terminate_node(self, node_id):
         node = self._get_cached_node(node_id)

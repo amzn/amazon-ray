@@ -1,9 +1,10 @@
 import ray
 import copy
 import json
+from uuid import uuid4
 from ray.tests.aws.utils.mocks import mock_path_exists_key_pair
 from ray.tests.aws.utils.constants import DEFAULT_INSTANCE_PROFILE, \
-    DEFAULT_KEY_PAIR, DEFAULT_SUBNET
+    DEFAULT_KEY_PAIR, DEFAULT_SUBNET, DEFAULT_CLUSTER_NAME
 from ray.tests.aws.utils.helpers import \
     get_cloudwatch_dashboard_config_file_path,\
     get_cloudwatch_alarm_config_file_path
@@ -143,6 +144,7 @@ def describe_instance_status_ok(ec2_client_stub, instance_ids):
 
 
 def send_command_cwa_install(ssm_client_stub, node_ids):
+    command_id = str(uuid4())
     ssm_client_stub.add_response(
         "send_command",
         expected_params={
@@ -158,21 +160,24 @@ def send_command_cwa_install(ssm_client_stub, node_ids):
         },
         service_response={
             "Command": {
-                "CommandId": "92853adf-ba41-4cd6-9a88-142d1EXAMPLE",
+                "CommandId": command_id,
                 "DocumentName": "AWS-ConfigureAWSPackage"
             }
         })
+    return command_id
 
 
-def get_command_invocation_success(ssm_client_stub, node_ids):
+def list_command_invocations_success(ssm_client_stub, node_ids, cmd_id):
     for node_id in node_ids:
         ssm_client_stub.add_response(
-            "get_command_invocation",
+            "list_command_invocations",
             expected_params={
-                "CommandId": "92853adf-ba41-4cd6-9a88-142d1EXAMPLE",
+                "CommandId": cmd_id,
                 "InstanceId": node_id
             },
-            service_response={"Status": "Success"})
+            service_response={"CommandInvocations": [{
+                "Status": "Success"
+            }]})
 
 
 def put_parameter_cloudwatch_agent_config(ssm_client_stub, cluster_name):
@@ -191,7 +196,8 @@ def put_parameter_cloudwatch_agent_config(ssm_client_stub, cluster_name):
         service_response={})
 
 
-def send_command_cwa_collectd_setup_script(ssm_client_stub, node_ids):
+def send_command_cwa_collectd_init(ssm_client_stub, node_ids):
+    command_id = str(uuid4())
     ssm_client_stub.add_response(
         "send_command",
         expected_params={
@@ -206,10 +212,14 @@ def send_command_cwa_collectd_setup_script(ssm_client_stub, node_ids):
                 ],
             }
         },
-        service_response={})
+        service_response={"Command": {
+            "CommandId": command_id
+        }})
+    return command_id
 
 
 def send_command_start_cwa(ssm_client_stub, node_ids):
+    command_id = str(uuid4())
     ssm_client_stub.add_response(
         "send_command",
         expected_params={
@@ -222,12 +232,15 @@ def send_command_start_cwa(ssm_client_stub, node_ids):
                 "mode": ["ec2"],
                 "optionalConfigurationSource": ["ssm"],
                 "optionalConfigurationLocation": [
-                    CWA_CONFIG_SSM_PARAM_NAME_BASE
+                    f"{CWA_CONFIG_SSM_PARAM_NAME_BASE}_{DEFAULT_CLUSTER_NAME}"
                 ],
                 "optionalRestart": ["yes"]
             }
         },
-        service_response={})
+        service_response={"Command": {
+            "CommandId": command_id
+        }})
+    return command_id
 
 
 def put_cluster_dashboard_success(cloudwatch_client_stub, cloudwatch_helper):
