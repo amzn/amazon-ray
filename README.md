@@ -29,18 +29,18 @@ Latest Ray-optimized EC2 AMIs with Amazon Ray wheels pre-installed:
 
 | Ray Wheel                                                                                                                       | Base AMI                                     | AMI ID                | Region    |
 |---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|-----------------------|-----------|
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0e2fc97aaa343156d | us-east-1 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0e7b40d56ecaf5dbc | us-east-1 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0a2b820bc26be230a | us-east-1 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0a9640f2cf77e9741 | us-east-2 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-08903a99863eb1de4 | us-east-2 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-01343db7ef03b18ca | us-east-2 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-01ecd73bb949a40a9 | us-west-1 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-04c4e09d41380adaa | us-west-1 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-089bdf6ffd6d53a99 | us-west-1 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-029c8f1c36b286461 | us-west-2 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0f92e9d2b63bc61a2 | us-west-2 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-083ba02bde05305a4 | us-west-2 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0549ba034ba12f098 | us-east-1 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0b217a3b201a1e505 | us-east-2 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-07b1cd7c6c3f3d60f | us-west-1 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0fdb210ac632f37e5 | us-west-2 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0db6fbf8ddc4aa4b7 | us-east-1 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-061b104cb6a8f0595 | us-east-2 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-00bd59e2aa1396cc2 | us-west-1 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0569ec7d5a54c9972 | us-west-2 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0aae22389e6efb936 | us-east-1 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-02f877397985a2565 | us-east-2 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-057f82291e42a92e9 | us-west-1 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0caeb3fbbc588aa12 | us-west-2 |
 
 All of the above AMIs have passed unit tests and EC2 cluster integration tests. To use any of the above AMIs,
 first ensure that you're launching your Ray EC2 cluster in the same region as the AMI, then specify the AMI ID
@@ -68,22 +68,16 @@ setup_commands: []
 Each AMI comes with the
 [CloudWatch Unified Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/UseCloudWatchUnifiedAgent.html)
 pre-installed and configured. The agent will automatically collect additional system level metrics for each EC2
-instance in your Ray cluster and write Ray system logs out to corresponding CloudWatch log groups like
-*amzn-ray-cp37-manylinux--ray_logs_out* and *amzn-ray-cp37-manylinux--ray_logs_err*.
+instance in your Ray cluster and write Ray system logs out to the CloudWatch log groups *ray_logs_out* and
+*ray_logs_err*.
 
 Any logs written to `/tmp/ray/user/var/output/logs/*.info.log` will be automatically added to a corresponding
-*amzn-ray-cp37-manylinux--ray_user_logs_info* CloudWatch log group, while logs written to
-`/tmp/ray/user/var/output/logs/*.debug.log` will be added to a corresponding
-*amzn-ray-cp37-manylinux--ray_user_logs_debug* log group.
-
-> Although all of the above log groups include *cp37* in their name, the actual log group
-> name depends on the Python version of the Ray wheel installed. For example, an AMI with the Python 3.6 Ray
-> wheel installed will use *cp36* instead.
+*ray_user_logs_info* CloudWatch log group, while logs written to `/tmp/ray/user/var/output/logs/*.debug.log` will
+be added to a corresponding *ray_user_logs_debug* log group.
 
 For log and metric publication to work you first need to ensure that the IAM role associated with your Ray
 cluster EC2 instances is authorized to publish them. This can be done by attaching the following policy to this
-IAM role, replacing `{AWS_ACCOUNT_ID}` with your 12-digit AWS account ID and `{CP_VERSION}` with *36*, *37*, or
-*38* based on the AMI's Ray wheel Python version:
+IAM role, replacing `{AWS_ACCOUNT_ID}` with your 12-digit AWS account ID:
 
 ```json
 {
@@ -109,10 +103,10 @@ IAM role, replacing `{AWS_ACCOUNT_ID}` with your 12-digit AWS account ID and `{C
         "logs:DescribeLogGroups"
       ],
       "Resource": [
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_logs_out:*",
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_logs_err:*",
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_user_logs_debug:*",
-        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:amzn-ray-cp{CP_VERSION}-manylinux--ray_user_logs_info:*"
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:ray_logs_out:*",
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:ray_logs_err:*",
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:ray_user_logs_debug:*",
+        "arn:aws:logs:us-east-1:{AWS_ACCOUNT_ID}:log-group:ray_user_logs_info:*"
       ]
     }
   ]
