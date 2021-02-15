@@ -63,16 +63,3 @@ def get_cloudwatch_helper(node_ids):
         node_ids,
         config["cluster_name"],
     )
-
-
-def test_put_cloudwatch_dashboard(node_ids, cluster_name):
-    get_cloudwatch_helper().put_cloudwatch_dashboard(node_ids, cluster_name)
-
-
-def test_ssm_install_cloudwatch(node_ids, cluster_name):
-    get_cloudwatch_helper().ssm_install_cloudwatch_agent(
-        node_ids, cluster_name)
-
-
-def test_put_cloudwatch_alarm(node_ids, cluster_name):
-    get_cloudwatch_helper().put_cloudwatch_alarm(node_ids, cluster_name)
