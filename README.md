@@ -50,15 +50,15 @@ to use with your cluster's head and worker nodes in your autoscaler config:
 provider:
   type: aws
   region: us-east-1
-  availability_zone: us-east-1a
+  availability_zone: us-east-1a, us-east-1b, us-east-1c, us-east-1d, us-east-1f
 
 head_node:
   InstanceType: r5n.xlarge
-  ImageId: ami-0e7b40d56ecaf5dbc
+  ImageId: ami-0a4da390e7a168bb9
 
 worker_nodes:
   InstanceType: r5n.2xlarge
-  ImageId: ami-0e7b40d56ecaf5dbc
+  ImageId: ami-0a4da390e7a168bb9
 
 # explicitly remove setup commands to keep the pre-installed version of ray
 setup_commands: []
