@@ -29,18 +29,18 @@ Latest Ray-optimized EC2 AMIs with Amazon Ray wheels pre-installed:
 
 | Ray Wheel                                                                                                                       | Base AMI                                     | AMI ID                | Region    |
 |---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|-----------------------|-----------|
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0549ba034ba12f098 | us-east-1 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0b217a3b201a1e505 | us-east-2 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-07b1cd7c6c3f3d60f | us-west-1 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0fdb210ac632f37e5 | us-west-2 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0db6fbf8ddc4aa4b7 | us-east-1 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-061b104cb6a8f0595 | us-east-2 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-00bd59e2aa1396cc2 | us-west-1 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0569ec7d5a54c9972 | us-west-2 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0aae22389e6efb936 | us-east-1 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-02f877397985a2565 | us-east-2 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-057f82291e42a92e9 | us-west-1 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0caeb3fbbc588aa12 | us-west-2 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-025b0741c5ebf7d9f | us-east-1 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-063108a9ccbb12ef2 | us-east-2 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0956a36239fe22b61 | us-west-1 |
+| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-070beff7e6aabee85 | us-west-2 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0a4da390e7a168bb9 | us-east-1 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0a4eafb4b01445f67 | us-east-2 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-040918e102e989b89 | us-west-1 |
+| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0e17b2106eb95aeeb | us-west-2 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-04a8d96070f130eb1 | us-east-1 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-09c70a296453d2d57 | us-east-2 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0f75730bc24008b20 | us-west-1 |
+| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-04e23701d01e53705 | us-west-2 |
 
 All of the above AMIs have passed unit tests and EC2 cluster integration tests. To use any of the above AMIs,
 first ensure that you're launching your Ray EC2 cluster in the same region as the AMI, then specify the AMI ID
