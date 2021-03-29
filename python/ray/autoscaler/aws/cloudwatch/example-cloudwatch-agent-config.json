@@ -8,6 +8,74 @@
       "port":31000
    },
    "logs":{
+      "metrics_collected": {
+        "prometheus": {
+          "log_group_name": "{cluster_name}-Prometheus",
+          "prometheus_config_path": "/opt/prometheus-2.25.0.linux-amd64/prometheus.yml",
+          "emf_processor": {
+            "metric_declaration_dedup": true,
+            "metric_namespace": "{cluster_name}-Prometheus",
+            "metric_unit":{
+              "python_gc_collections_total": "Count",
+              "python_gc_objects": "Count",
+              "python_gc_objects_uncollectable_total": "Count",
+              "python_gc_objects_collected_total": "Count",
+              "ray_cluster_active_nodes": "Count",
+              "ray_cluster_pending_nodes": "Count",
+              "ray_node_cpu_count": "Count",
+              "ray_node_cpu_utilization": "Percent",
+              "ray_node_disk_free": "Bytes",
+              "ray_node_disk_usage": "Bytes",
+              "ray_node_disk_utilization_percentage": "Percent",
+              "ray_node_mem_available": "Bytes",
+              "ray_node_mem_total": "Bytes",
+              "ray_node_mem_used": "Bytes",
+              "ray_node_network_receive_speed": "Bytes",
+              "ray_node_network_received": "Bytes",
+              "ray_node_network_send_speed": "Bytes",
+              "ray_node_network_sent": "Bytes",
+              "ray_avg_num_executed_tasks": "Count",
+              "ray_avg_num_scheduled_tasks": "Count",
+              "ray_avg_num_spilled_back_tasks": "Count",
+              "ray_object_manager_num_pull_requests": "Count",
+              "ray_object_store_available_memory": "Bytes",
+              "ray_object_store_used_memory": "Bytes",
+              "ray_object_store_num_local_objects": "Count",
+              "ray_object_directory_subscriptions": "Count",
+              "ray_object_directory_added_locations": "Count",
+              "ray_object_directory_removed_locations": "Count",
+              "ray_object_directory_lookups": "Count",
+              "ray_object_directory_updates": "Count",
+              "ray_pending_actors": "Count",
+              "ray_pending_placement_groups": "Count",
+              "ray_raylet_cpu": "Count",
+              "ray_raylet_mem": "Bytes",
+              "process_max_fds": "Count",
+              "process_open_fds": "Count",
+              "process_resident_memory_bytes": "Bytes",
+              "process_virtual_memory_bytes": "Bytes",
+              "process_start_time_seconds": "Seconds",
+              "process_cpu_seconds_total": "Seconds"
+            },
+            "metric_declaration": [
+              {
+                "source_labels": [
+                  "job"
+                ],
+                "label_matcher": "ray",
+                "dimensions": [
+                  [
+                    "instance"
+                  ]
+                ],
+                "metric_selectors": [
+                  ""
+                ]
+              }
+            ]
+          }
+        }
+      },
       "logs_collected":{
          "files":{
             "collect_list":[
