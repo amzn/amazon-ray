@@ -45,7 +45,7 @@ bayesian-optimization==1.2.0
     #   nevergrad
 bcrypt==3.2.0
     # via paramiko
-bleach==3.2.2
+bleach==3.3.0
     # via nbconvert
 bokeh==2.2.3
     # via dask
