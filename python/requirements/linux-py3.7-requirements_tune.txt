@@ -830,7 +830,7 @@ typing-extensions==3.7.4.3
     #   torch
 typing==3.7.4.3
     # via configspace
-urllib3==1.26.2
+urllib3==1.26.3
     # via
     #   botocore
     #   kubernetes
