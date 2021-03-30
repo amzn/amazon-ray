@@ -118,7 +118,7 @@ configspace==0.4.10
     #   hpbandster
 contextvars==2.4
     # via distributed
-cryptography==3.3.1
+cryptography==3.3.2
     # via
     #   azure-storage-blob
     #   paramiko
