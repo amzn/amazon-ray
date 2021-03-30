@@ -268,7 +268,7 @@ itsdangerous==1.1.0
     # via flask
 jedi==0.18.0
     # via ipython
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   ax-platform
     #   bokeh
