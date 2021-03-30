@@ -114,7 +114,7 @@ configspace==0.4.10
     #   -r requirements_tune.in
     #   autogluon.core
     #   hpbandster
-cryptography==3.3.1
+cryptography==3.3.2
     # via
     #   azure-storage-blob
     #   paramiko
