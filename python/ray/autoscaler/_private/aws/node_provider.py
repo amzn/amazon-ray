@@ -508,6 +508,10 @@ class AWSNodeProvider(NodeProvider):
 
         return self._get_node(node_id)
 
+    def update_nodes(self, node_ids):
+        CloudwatchHelper(self.provider_config, node_ids, self.cluster_name). \
+            update_from_config()
+
     @staticmethod
     def bootstrap_config(cluster_config):
         return bootstrap_aws(cluster_config)

@@ -678,6 +678,8 @@ def get_or_create_head_node(config: Dict[str, Any],
         if not no_restart:
             warn_about_bad_start_command(ray_start_commands)
 
+        provider.update_nodes(nodes)
+
         updater = NodeUpdaterThread(
             node_id=head_node,
             provider_config=config["provider"],

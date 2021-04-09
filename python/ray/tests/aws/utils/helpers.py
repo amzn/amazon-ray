@@ -63,3 +63,9 @@ def get_cloudwatch_helper(node_ids):
         node_ids,
         config["cluster_name"],
     )
+
+
+def get_ssm_param_name(cluster_name, section_name):
+    ssm_config_param_name = "ray_cloudwatch_{}_config_{}".format(
+        section_name, cluster_name)
+    return ssm_config_param_name

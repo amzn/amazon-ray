@@ -117,6 +117,16 @@ class NodeProvider:
         """
         raise NotImplementedError
 
+    def update_node(self, node_id: str) -> None:
+        """Updates the specified node."""
+        pass
+
+    def update_nodes(self, node_ids: List[str]) -> None:
+        """Updates a set of nodes. May be overridden with a batch method."""
+        for node_id in node_ids:
+            logger.info("NodeProvider: " "{}: Updating node".format(node_id))
+            self.update_node(node_id)
+
     def set_node_tags(self, node_id: str, tags: Dict[str, str]) -> None:
         """Sets the tag values (string dict) for the specified node."""
         raise NotImplementedError
