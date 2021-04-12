@@ -104,7 +104,7 @@ download_jars() {
       if [[ "$os" == "windows" ]]; then
         continue
       fi
-      local url="https://ray-wheels.s3-us-west-2.amazonaws.com/jars/$TRAVIS_BRANCH/$TRAVIS_COMMIT/$os/$f"
+      local url="http://d168575n8y1h5x.cloudfront.net/jars/$TRAVIS_BRANCH/$TRAVIS_COMMIT/$os/$f"
       mkdir -p "$JAR_BASE_DIR/$os"
       local dest_file="$JAR_BASE_DIR/$os/$f"
       echo "Jar url: $url"

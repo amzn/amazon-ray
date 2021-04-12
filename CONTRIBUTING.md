@@ -21,9 +21,20 @@ reported the issue. Please try to include as much information as you can. Detail
 
 
 ## Contributing via Pull Requests
-Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
+Contributions via pull requests are much appreciated.
 
-1. You are working against the latest source on the *main* branch.
+Amazon-Ray comes with three major branches: experimental, admin and main.
+The *experimental* branch holds all pending contributions back to the [Ray Project](https://github.com/ray-project/ray).
+Your pull request should take place off of this branch.
+The *admin* branch works on top of *experimental* and contains administrative changes specific to this repository (e.g. documentation, Travis CI configuration, etc.). The *main* branch periodically integrates changes from *admin*.
+
+The branch relationship is depicted in the diagram below.
+
+![image info](./doc/source/images/amzn-ray-branch-relationships.png)
+
+Before sending us a pull request, please ensure that:
+
+1. You are working against the latest source on the *experimental* branch.
 2. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
 3. You open an issue to discuss any significant work - we would hate for your time to be wasted.
 

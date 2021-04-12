@@ -12,6 +12,7 @@
 
 ## Checks
 
+- [ ] I'm working against the latest source on the **experimental** branch.
 - [ ] I've run `scripts/format.sh` to lint the changes in this PR.
 - [ ] I've included any doc changes needed.
 - [ ] I've made sure the tests are passing. Note that there might be a few flaky tests.

@@ -20,8 +20,9 @@ updates:
     # Only 5 upgrade PRs open at a time.
     open-pull-requests-limit: 5
     reviewers:
-      - "ray-project/ray-tune"
-  # Data Requirements.
+      - "amzn/amazon-ray-program"
+
+  # RLlib requirements.
   - package-ecosystem: "pip"
     directory: "/python/requirements/data_processing"
     schedule:
@@ -39,5 +40,9 @@ updates:
     # Only 5 upgrade PRs open at a time.
     open-pull-requests-limit: 5
     reviewers:
+<<<<<<< HEAD
       - "scv119"
       - "clarkzinzow"
+=======
+      - "amzn/amazon-ray-program"
+>>>>>>> 6b379daed (Add amazon-ray branch relationship description)

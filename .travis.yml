@@ -79,7 +79,7 @@ deploy:
     skip_cleanup: true
     on:
       branch: master
-      repo: ray-project/ray
+      repo: amzn/amazon-ray
       condition: $MAC_WHEELS = 1
 
   # Upload jars so that we can debug locally for every commit

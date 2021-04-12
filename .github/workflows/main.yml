@@ -117,7 +117,7 @@ jobs:
         }
         trap clean_up EXIT
 
-        python -u ci/remote-watch.py --skip_repo=ray-project/ray &
+        python -u ci/remote-watch.py --skip_repo=amzn/amazon-ray &
         . ./ci/travis/ci.sh test_core
         . ./ci/travis/ci.sh test_python
     - name: Run Clang Include-What-You-Use
