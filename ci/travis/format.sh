@@ -246,7 +246,7 @@ format_all() {
     echo "$(date)" "done!"
 }
 
-# Format files that differ from main branch. Ignores dirs that are not slated
+# Format files that differ from experimental branch. Ignores dirs that are not slated
 # for autoformat yet.
 format_changed() {
     # The `if` guard ensures that the list of filenames is not empty, which
@@ -255,7 +255,7 @@ format_changed() {
     #
     # `diff-filter=ACRM` and $MERGEBASE is to ensure we only format files that
     # exist on both branches.
-    MERGEBASE="$(git merge-base upstream/master HEAD)"
+    MERGEBASE="$(git merge-base upstream/experimental HEAD)"
 
     if ! git diff --diff-filter=ACRM --quiet --exit-code "$MERGEBASE" -- '*.py' &>/dev/null; then
         git diff --name-only --diff-filter=ACRM "$MERGEBASE" -- '*.py' | xargs -P 5 \
@@ -312,11 +312,11 @@ elif [ "${1-}" == '--all' ]; then
 else
     # Add the upstream remote if it doesn't exist
     if ! git remote -v | grep -q upstream; then
-        git remote add 'upstream' 'https://github.com/ray-project/ray.git'
+        git remote add 'upstream' 'https://github.com/amzn/amazon-ray.git'
     fi
 
-    # Only fetch master since that's the branch we're diffing against.
-    git fetch upstream master || true
+    # Only fetch experimental since that's the branch we're diffing against.
+    git fetch upstream experimental || true
 
     # Format only the files that changed in last commit.
     format_changed
