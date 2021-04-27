@@ -24,9 +24,9 @@ reported the issue. Please try to include as much information as you can. Detail
 Contributions via pull requests are much appreciated.
 
 Amazon-Ray comes with three major branches: experimental, admin and main.
-The *experimental* branch holds all contributions back to the [Ray Project](https://github.com/ray-project/ray).
+The *experimental* branch holds all pending contributions back to the [Ray Project](https://github.com/ray-project/ray).
 Your pull request should take place off of this branch.
-The *admin* branch works on top of *experimental* and contains administrative changes specific to this repository (e.g.,documentation, Travis CI configuration, etc.). The *main* branch periodically integrates changes from *admin*.
+The *admin* branch works on top of *experimental* and contains administrative changes specific to this repository (e.g. documentation, Travis CI configuration, etc.). The *main* branch periodically integrates changes from *admin*.
 
 The branch relationship is depicted in the diagram below.
 
