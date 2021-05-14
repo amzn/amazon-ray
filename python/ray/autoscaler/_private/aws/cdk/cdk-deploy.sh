@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-progname=`basename $0`
-declare -a SUPPORTED_PYENV_VERSIONS=("3.6","3.7","3.8")
+
+# Cause the script to exit if a single command fails.
+set -e
+
+declare -a SUPPORTED_PYENV_VERSIONS=("3.6" "3.7" "3.8")
 
 usage() {
     echo "usage: cdk-deploy -s stack-prefix [-a ami-id] [-p pyenv-version]"
@@ -18,7 +21,7 @@ do
         -s|--stack-prefix) prefix="$1"; shift ;;
         -a|--ami-id) amiid="$1"; shift ;;
         -p|--pyenv-version) pyenvversion="$1"; shift ;;
-        *            ) echo "ERROR: Invalid option: \""$opt"\"" >&2
+        *            ) echo "ERROR: Invalid option: \" $opt \"" >&2
                        exit 1 ;;
     esac
 done
@@ -32,7 +35,7 @@ else
     export CDK_PREFIX=$prefix
 fi
 
-if [ $amiid ]; then
+if [ "$amiid" ]; then
     echo "Using user defined EC2 AMI: ${amiid}"
     export AMI=$amiid
 else
@@ -40,9 +43,9 @@ else
 fi
 echo "For more regional AMIs, check https://github.com/amzn/amazon-ray#images"
 
-if [ $pyenvversion ]; then
-    if [[ ! "${SUPPORTED_PYENV_VERSIONS[@]}" =~ "${pyenvversion}" ]]; then
-        echo "Supported pyenv version: ${SUPPORTED_PYENV_VERSIONS[@]}"
+if [ "$pyenvversion" ]; then
+    if [[ ! "${SUPPORTED_PYENV_VERSIONS[*]}" =~ ${pyenvversion[*]} ]]; then
+        echo "error: pyenv ${pyenvversion} not supported. Chose from: ${SUPPORTED_PYENV_VERSIONS[*]}"
         exit 1
     else
         export PYENV_VERSION_SUNGATE=$pyenvversion
