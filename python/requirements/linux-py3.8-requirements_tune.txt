@@ -827,7 +827,7 @@ urllib3==1.26.4
     #   sentry-sdk
 wandb==0.10.12
     # via -r requirements_tune.in
-watchdog==1.0.2
+watchdog==2.1.1
     # via wandb
 wcwidth==0.2.5
     # via
