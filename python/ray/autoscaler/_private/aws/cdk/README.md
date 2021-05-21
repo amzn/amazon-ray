@@ -1,5 +1,5 @@
 
-# CDK Integration with SunGate
+# CDK Integration with Ray
 
 This is a CDK Python project to automate the process of configuring AWS resources 
 needed for setting up a Ray cluster. It defines cloud infrastructure required to 

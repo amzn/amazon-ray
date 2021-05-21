@@ -75,6 +75,6 @@ if "CDK_PREFIX" not in os.environ.keys():
 amazon_ray_props = AmazonRayStackProps(prefix=os.environ["CDK_PREFIX"],
                                        ami=ami)
 
-sungate_stack = CdkStack(app, id="cdk-ray", env=env_cn, props=amazon_ray_props)
+ray_stack = CdkStack(app, id="cdk-ray", env=env_cn, props=amazon_ray_props)
 
 app.synth()

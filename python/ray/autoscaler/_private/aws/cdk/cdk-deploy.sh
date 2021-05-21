@@ -48,7 +48,7 @@ if [ "$pyenvversion" ]; then
         echo "error: pyenv ${pyenvversion} not supported. Chose from: ${SUPPORTED_PYENV_VERSIONS[*]}"
         exit 1
     else
-        export PYENV_VERSION_SUNGATE=$pyenvversion
+        export PYENV_VERSION_RAY=$pyenvversion
     fi
 else
     echo "Using default pyenv version"
