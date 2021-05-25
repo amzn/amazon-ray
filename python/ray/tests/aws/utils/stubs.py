@@ -4,12 +4,11 @@ import json
 from uuid import uuid4
 from ray.tests.aws.utils.mocks import mock_path_exists_key_pair
 from ray.tests.aws.utils.constants import DEFAULT_INSTANCE_PROFILE, \
-    DEFAULT_KEY_PAIR, DEFAULT_SUBNET, DEFAULT_CLUSTER_NAME
+    DEFAULT_KEY_PAIR, DEFAULT_SUBNET
 from ray.tests.aws.utils.helpers import \
     get_cloudwatch_dashboard_config_file_path,\
-    get_cloudwatch_alarm_config_file_path
-from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper import \
-    CWA_CONFIG_SSM_PARAM_NAME_BASE
+    get_cloudwatch_alarm_config_file_path,\
+    get_cloudwatch_agent_config_file_path
 
 from unittest import mock
 
@@ -180,18 +179,18 @@ def list_command_invocations_success(ssm_client_stub, node_ids, cmd_id):
             }]})
 
 
-def put_parameter_cloudwatch_agent_config(ssm_client_stub, cluster_name):
-    cwa_config_ssm_param_name = "{}_{}".format(
-        CWA_CONFIG_SSM_PARAM_NAME_BASE,
-        cluster_name,
-    )
+def put_parameter_cloudwatch_config(ssm_client_stub, cluster_name,
+                                    section_name):
+    ssm_config_param_name = "ray_cloudwatch_{}_config_{}".format(
+        section_name, cluster_name)
     ssm_client_stub.add_response(
         "put_parameter",
         expected_params={
-            "Name": cwa_config_ssm_param_name,
+            "Name": ssm_config_param_name,
             "Type": "String",
             "Value": ANY,
-            "Overwrite": True
+            "Overwrite": True,
+            "Tier": ANY
         },
         service_response={})
 
@@ -218,7 +217,7 @@ def send_command_cwa_collectd_init(ssm_client_stub, node_ids):
     return command_id
 
 
-def send_command_start_cwa(ssm_client_stub, node_ids):
+def send_command_start_cwa(ssm_client_stub, node_ids, parameter_name):
     command_id = str(uuid4())
     ssm_client_stub.add_response(
         "send_command",
@@ -231,14 +230,70 @@ def send_command_start_cwa(ssm_client_stub, node_ids):
                 "action": ["configure"],
                 "mode": ["ec2"],
                 "optionalConfigurationSource": ["ssm"],
-                "optionalConfigurationLocation": [
-                    f"{CWA_CONFIG_SSM_PARAM_NAME_BASE}_{DEFAULT_CLUSTER_NAME}"
-                ],
+                "optionalConfigurationLocation": [parameter_name],
                 "optionalRestart": ["yes"]
             }
         },
         service_response={"Command": {
             "CommandId": command_id
+        }})
+    return command_id
+
+
+def send_command_stop_cwa(ssm_client_stub, node_ids):
+    command_id = str(uuid4())
+    ssm_client_stub.add_response(
+        "send_command",
+        expected_params={
+            "DocumentName": "AmazonCloudWatch-ManageAgent",
+            "InstanceIds": node_ids,
+            "MaxConcurrency": str(min(len(node_ids), 100)),
+            "MaxErrors": "0",
+            "Parameters": {
+                "action": ["stop"],
+                "mode": ["ec2"],
+                "optionalConfigurationSource": ["ssm"]
+            }
+        },
+        service_response={"Command": {
+            "CommandId": command_id
+        }})
+    return command_id
+
+
+def get_param_ssm_same(ssm_client_stub, ssm_param_name, cloudwatch_helper,
+                       config_type):
+    command_id = str(uuid4())
+    cw_value_json = cloudwatch_helper. \
+        CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC[config_type]()
+    ssm_client_stub.add_response(
+        "get_parameter",
+        expected_params={"Name": ssm_param_name},
+        service_response={"Parameter": {
+            "Value": json.dumps(cw_value_json)
+        }})
+    return command_id
+
+
+def get_param_ssm_different(ssm_client_stub, ssm_param_name):
+    command_id = str(uuid4())
+    ssm_client_stub.add_response(
+        "get_parameter",
+        expected_params={"Name": ssm_param_name},
+        service_response={"Parameter": {
+            "Value": "value"
+        }})
+    return command_id
+
+
+def get_param_ssm_exception(ssm_client_stub, ssm_param_name):
+    command_id = str(uuid4())
+    ssm_client_stub.add_client_error(
+        "get_parameter",
+        "ParameterNotFound",
+        expected_params={"Name": ssm_param_name},
+        response_meta={"Error": {
+            "Code": "ParameterNotFound"
         }})
     return command_id
 
@@ -301,3 +356,21 @@ def put_cluster_alarms_success(cloudwatch_client_stub, cloudwatch_helper):
                 service_response={"ResponseMetadata": {
                     "HTTPStatusCode": 200
                 }})
+
+
+def get_metric_alarm(cloudwatch_client_stub):
+    cloudwatch_client_stub.add_response(
+        "describe_alarms",
+        expected_params={},
+        service_response={"MetricAlarms": [{
+            "AlarmName": "myalarm"
+        }]})
+
+
+def delete_metric_alarms(cloudwatch_client_stub):
+    cloudwatch_client_stub.add_response(
+        "delete_alarms",
+        expected_params={"AlarmNames": ["myalarm"]},
+        service_response={"ResponseMetadata": {
+            "HTTPStatusCode": 200
+        }})
