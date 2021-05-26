@@ -4,14 +4,21 @@ import json
 import os
 import logging
 import time
+import binascii
+from enum import Enum
 from ray.autoscaler._private.aws.utils import client_cache
 
 logger = logging.getLogger(__name__)
 
-CWA_CONFIG_SSM_PARAM_NAME_BASE = "ray_cloudwatch_agent_config"
 RAY = "ray-autoscaler"
 CLOUDWATCH_RAY_INSTANCE_PROFILE = RAY + "-cloudwatch-v1"
 CLOUDWATCH_RAY_IAM_ROLE = RAY + "-cloudwatch-v1"
+
+
+class CloudwatchConfigType(Enum):
+    AGENT = "agent"
+    DASHBOARD = "dashboard"
+    ALARM = "alarm"
 
 
 class CloudwatchHelper:
@@ -24,13 +31,34 @@ class CloudwatchHelper:
         self.ec2_client = client_cache("ec2", region)
         self.ssm_client = client_cache("ssm", region)
         self.cloudwatch_client = client_cache("cloudwatch", region)
+        self.CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC = {
+            CloudwatchConfigType.AGENT.value: self.
+            _replace_cwa_config_variables,
+            CloudwatchConfigType.DASHBOARD.value: self.
+            _replace_dashboard_config_variables,
+            CloudwatchConfigType.ALARM.value: self.
+            _replace_alarm_config_variables,
+        }
+        self.CLOUDWATCH_CONFIG_TYPE_TO_CLOUDWATCH_SETUP_FUNC = {
+            CloudwatchConfigType.AGENT.value: self.
+            ssm_install_cloudwatch_agent,
+            CloudwatchConfigType.DASHBOARD.value: self.
+            put_cloudwatch_dashboard,
+            CloudwatchConfigType.ALARM.value: self.put_cloudwatch_alarm,
+        }
+        self.CLOUDWATCH_CONFIG_TYPE_TO_UPDATE_CONFIG_FUNC = {
+            CloudwatchConfigType.AGENT.value: self._update_agent_config,
+            CloudwatchConfigType.DASHBOARD.value: self.
+            _update_dashboard_config,
+            CloudwatchConfigType.ALARM.value: self._update_alarm_config,
+        }
 
     def setup_from_config(self):
         # check if user specified a cloudwatch agent config file path.
         # if so, install and start cloudwatch agent
         if CloudwatchHelper.cloudwatch_config_exists(
                 self.provider_config,
-                "agent",
+                CloudwatchConfigType.AGENT.value,
                 "config",
         ):
             self.ssm_install_cloudwatch_agent()
@@ -39,7 +67,7 @@ class CloudwatchHelper:
         # if so, put cloudwatch dashboard
         if CloudwatchHelper.cloudwatch_config_exists(
                 self.provider_config,
-                "dashboard",
+                CloudwatchConfigType.DASHBOARD.value,
                 "config",
         ):
             self.put_cloudwatch_dashboard()
@@ -48,10 +76,34 @@ class CloudwatchHelper:
         # if so, put cloudwatch alarms
         if CloudwatchHelper.cloudwatch_config_exists(
                 self.provider_config,
-                "alarm",
+                CloudwatchConfigType.ALARM.value,
                 "config",
         ):
             self.put_cloudwatch_alarm()
+
+    def update_from_config(self):
+        """Update SSM parameter store cwa config file and restart cwa"""
+        if CloudwatchHelper.cloudwatch_config_exists(
+                self.provider_config,
+                CloudwatchConfigType.AGENT.value,
+                "config",
+        ):
+            self._update_cloudwatch_config(CloudwatchConfigType.AGENT.value)
+
+        if CloudwatchHelper.cloudwatch_config_exists(
+                self.provider_config,
+                CloudwatchConfigType.DASHBOARD.value,
+                "config",
+        ):
+            self._update_cloudwatch_config(
+                CloudwatchConfigType.DASHBOARD.value)
+
+        if CloudwatchHelper.cloudwatch_config_exists(
+                self.provider_config,
+                CloudwatchConfigType.ALARM.value,
+                "config",
+        ):
+            self._update_cloudwatch_config(CloudwatchConfigType.ALARM.value)
 
     def ssm_install_cloudwatch_agent(self):
         """Install and Start CloudWatch Agent via Systems Manager (SSM)"""
@@ -99,23 +151,12 @@ class CloudwatchHelper:
         logger.info(
             "Uploading CloudWatch Unified Agent config to the SSM parameter"
             "store.")
-        cwa_config = self._load_config_file("agent")
-        self._replace_all_config_variables(
-            cwa_config,
-            None,
-            self.cluster_name,
-            self.provider_config["region"],
-        )
-        cwa_config_ssm_param_name = "{}_{}".format(
-            CWA_CONFIG_SSM_PARAM_NAME_BASE,
-            self.cluster_name,
-        )
-        self.ssm_client.put_parameter(
-            Name=cwa_config_ssm_param_name,
-            Type="String",
-            Value=json.dumps(cwa_config),
-            Overwrite=True,
-        )
+        cwa_config_ssm_param_name = self._get_ssm_param_name(
+            CloudwatchConfigType.AGENT.value)
+        cwa_config = self. \
+            CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC \
+            .get(CloudwatchConfigType.AGENT.value)()
+        self._put_ssm_param(cwa_config, cwa_config_ssm_param_name)
 
         # satisfy collectd preconditions before starting cloudwatch agent
         logger.info("Preparing to start CloudWatch Unified Agent on {} nodes."
@@ -130,53 +171,23 @@ class CloudwatchHelper:
             "AWS-RunShellScript",
             parameters_run_shell,
         )
-
-        # start cloudwatch agent
-        logger.info("Starting CloudWatch Unified Agent package on {} nodes."
-                    .format(len(self.node_ids)))
-        parameters_start_cwa = {
-            "action": ["configure"],
-            "mode": ["ec2"],
-            "optionalConfigurationSource": ["ssm"],
-            "optionalConfigurationLocation": [cwa_config_ssm_param_name],
-            "optionalRestart": ["yes"],
-        }
-        self._ssm_command_waiter(
-            "AmazonCloudWatch-ManageAgent",
-            parameters_start_cwa,
-        )
-        logger.info(
-            "CloudWatch Unified Agent started successfully on all nodes."
-            .format(len(self.node_ids)))
+        self._start_cloudwatch_agent(cwa_config_ssm_param_name)
 
     def put_cloudwatch_dashboard(self):
         """put dashboard to cloudwatch console"""
 
         cloudwatch_config = self.provider_config["cloudwatch"]
-        dashboard_config = cloudwatch_config.get("dashboard", {})
+        dashboard_config = cloudwatch_config \
+            .get(CloudwatchConfigType.DASHBOARD.value, {})
         dashboard_name = dashboard_config.get("name", self.cluster_name)
-        data = self._load_config_file("dashboard")
-        widgets = []
-        for item in data:
-            self._replace_all_config_variables(
-                item,
-                None,
-                self.cluster_name,
-                self.provider_config["region"],
-            )
-            for node_id in self.node_ids:
-                item_out = copy.deepcopy(item)
-                (item_out, modified_str_count) = \
-                    self._replace_all_config_variables(
-                        item_out,
-                        str(node_id),
-                        None,
-                        None,
-                    )
-                widgets.append(item_out)
-                if not modified_str_count:
-                    break  # no per-node dashboard widgets specified
+        widgets = self. \
+            CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC. \
+            get(CloudwatchConfigType.DASHBOARD.value)()
 
+        # upload cloudwatch dashboard config to the SSM parameter store
+        dashboard_config_ssm_param_name = self \
+            ._get_ssm_param_name(CloudwatchConfigType.DASHBOARD.value)
+        self._put_ssm_param(widgets, dashboard_config_ssm_param_name)
         response = self.cloudwatch_client.put_dashboard(
             DashboardName=dashboard_name,
             DashboardBody=json.dumps({
@@ -197,7 +208,8 @@ class CloudwatchHelper:
     def put_cloudwatch_alarm(self):
         """ put cloudwatch metric alarms read from config """
 
-        data = self._load_config_file("alarm")
+        data = self._load_config_file(CloudwatchConfigType.ALARM.value)
+        param_data = []
         for node_id in self.node_ids:
             for item in data:
                 item_out = copy.deepcopy(item)
@@ -207,8 +219,14 @@ class CloudwatchHelper:
                     self.cluster_name,
                     self.provider_config["region"],
                 )
+                param_data.append(item_out)
                 self.cloudwatch_client.put_metric_alarm(**item_out)
         logger.info("Successfully put alarms to cloudwatch console")
+
+        # upload cloudwatch alarm config to the SSM parameter store
+        alarm_config_ssm_param_name = self._get_ssm_param_name(
+            CloudwatchConfigType.ALARM.value)
+        self._put_ssm_param(param_data, alarm_config_ssm_param_name)
 
     def _send_command_to_nodes(self, document_name, parameters, node_ids):
         """ send SSM command to the given nodes """
@@ -246,7 +264,7 @@ class CloudwatchHelper:
 
         cloudwatch_config = self.provider_config["cloudwatch"]
         agent_retryer_config = cloudwatch_config \
-            .get("agent") \
+            .get(CloudwatchConfigType.AGENT.value) \
             .get("retryer", {})
         max_attempts = agent_retryer_config.get("max_attempts", 120)
         delay_seconds = agent_retryer_config.get("delay_seconds", 30)
@@ -374,22 +392,214 @@ class CloudwatchHelper:
                     modified_value_count += (collection[i] != value)
         return collection, modified_value_count
 
-    def _load_config_file(self, section_name):
+    def _load_config_file(self, config_type):
         """load JSON config file"""
-
         cloudwatch_config = self.provider_config["cloudwatch"]
-        json_config_file_section = cloudwatch_config.get(section_name, {})
+        json_config_file_section = cloudwatch_config.get(config_type, {})
         json_config_file_path = json_config_file_section.get("config", {})
         json_config_path = os.path.abspath(json_config_file_path)
         with open(json_config_path) as f:
             data = json.load(f)
         return data
 
+    def _set_cloudwatch_ssm_config_param(self, parameter_name, config_type):
+        """
+        get cloudwatch config for the given param
+        and config type from SSM if it exists
+        and put it in the SSM param store if it does not
+        """
+        try:
+            parameter_value = self._get_ssm_param(parameter_name)
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "ParameterNotFound":
+                logger.info(
+                    "Cloudwatch {} config file is new.".format(config_type))
+                self.CLOUDWATCH_CONFIG_TYPE_TO_CLOUDWATCH_SETUP_FUNC.get(
+                    config_type)()
+                parameter_value = self._get_ssm_param(parameter_name)
+            else:
+                logger.info("Failed to fetch Cloudwatch agent config from SSM "
+                            "parameter store.")
+                logger.error(e)
+                raise e
+        return parameter_value
+
+    def _get_ssm_param(self, parameter_name):
+        """
+        get the SSM parameter value associated with the given parameter name
+        """
+        response = self.ssm_client.get_parameter(Name=parameter_name)
+        res = response.get("Parameter", {})
+        cwa_parameter = res.get("Value", {})
+        return cwa_parameter
+
+    def _crc32_json(self, value):
+        """calculate the json string crc32 checksum"""
+        binary_value = value.encode("ascii")
+        crc = binascii.crc32(binary_value)
+        return crc
+
+    def _crc32_file(self, config_type):
+        """calculate the file crc32 checksum"""
+        config = self.CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC. \
+            get(config_type)()
+        value = json.dumps(config)
+        crc = self._crc32_json(value)
+        return crc
+
+    def _update_cloudwatch_config(self, config_type):
+        """
+        check whether update operations are needed in
+        cloudwatch related configs
+        """
+        param_name = self._get_ssm_param_name(config_type)
+        cw_config_ssm = self._set_cloudwatch_ssm_config_param(
+            param_name, config_type)
+        cur_cw_config_crc = self._crc32_file(config_type)
+        ssm_cw_config_crc = self._crc32_json(cw_config_ssm)
+        # check if user updated cloudwatch related config files.
+        # if so, perform corresponding actions.
+        if cur_cw_config_crc != ssm_cw_config_crc:
+            logger.info(
+                "Cloudwatch {} config file has changed.".format(config_type))
+            self.CLOUDWATCH_CONFIG_TYPE_TO_UPDATE_CONFIG_FUNC.get(
+                config_type)()
+
+    def _get_ssm_param_name(self, config_type):
+        """return the parameter name for cloudwatch configs"""
+        ssm_config_param_name = "ray_cloudwatch_{}_config_{}".format(
+            config_type, self.cluster_name)
+        return ssm_config_param_name
+
+    def _put_ssm_param(self, parameter, parameter_name):
+        """upload cloudwatch agent config to the SSM parameter store"""
+        self.ssm_client.put_parameter(
+            Name=parameter_name,
+            Type="String",
+            Value=json.dumps(parameter),
+            Overwrite=True,
+            Tier="Intelligent-Tiering",
+        )
+
+    def _replace_cwa_config_variables(self):
+        """
+        replace known variable occurrences in cloudwatch agent config file
+        """
+        cwa_config = self._load_config_file(CloudwatchConfigType.AGENT.value)
+        self._replace_all_config_variables(
+            cwa_config,
+            None,
+            self.cluster_name,
+            self.provider_config["region"],
+        )
+        return cwa_config
+
+    def _replace_dashboard_config_variables(self):
+        """
+        replace known variable occurrences in cloudwatch dashboard config file
+        """
+        data = self._load_config_file(CloudwatchConfigType.DASHBOARD.value)
+        widgets = []
+        for item in data:
+            self._replace_all_config_variables(
+                item,
+                None,
+                self.cluster_name,
+                self.provider_config["region"],
+            )
+            for node_id in self.node_ids:
+                item_out = copy.deepcopy(item)
+                (item_out, modified_str_count) = \
+                    self._replace_all_config_variables(
+                        item_out,
+                        str(node_id),
+                        None,
+                        None,
+                    )
+                widgets.append(item_out)
+                if not modified_str_count:
+                    break  # no per-node dashboard widgets specified
+        return widgets
+
+    def _replace_alarm_config_variables(self):
+        """
+        replace known variable occurrences in cloudwatch alarm config file
+        """
+        data = self._load_config_file(CloudwatchConfigType.ALARM.value)
+        param_data = []
+        for node_id in self.node_ids:
+            for item in data:
+                item_out = copy.deepcopy(item)
+                self._replace_all_config_variables(
+                    item_out,
+                    str(node_id),
+                    self.cluster_name,
+                    self.provider_config["region"],
+                )
+                param_data.append(item_out)
+        return param_data
+
+    def _restart_cloudwatch_agent(self, cwa_param_name):
+        """restart cloudwatch agent"""
+        logger.info("Stopping CloudWatch Unified Agent package on {} nodes."
+                    .format(len(self.node_ids)))
+        parameters_stop_cwa = {
+            "action": ["stop"],
+            "mode": ["ec2"],
+            "optionalConfigurationSource": ["ssm"],
+        }
+        self._ssm_command_waiter(
+            "AmazonCloudWatch-ManageAgent",
+            parameters_stop_cwa,
+        )
+        self._start_cloudwatch_agent(cwa_param_name)
+
+    def _start_cloudwatch_agent(self, cwa_param_name):
+        """start cloudwatch agent"""
+        logger.info("Starting CloudWatch Unified Agent package on {} nodes."
+                    .format(len(self.node_ids)))
+        parameters_start_cwa = {
+            "action": ["configure"],
+            "mode": ["ec2"],
+            "optionalConfigurationSource": ["ssm"],
+            "optionalConfigurationLocation": [cwa_param_name],
+            "optionalRestart": ["yes"],
+        }
+        self._ssm_command_waiter(
+            "AmazonCloudWatch-ManageAgent",
+            parameters_start_cwa,
+        )
+        logger.info(
+            "CloudWatch Unified Agent started successfully on all nodes."
+            .format(len(self.node_ids)))
+
+    def _update_agent_config(self):
+        param_name = self.\
+            _get_ssm_param_name(CloudwatchConfigType.AGENT.value)
+        param_cwa = self. \
+            CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC. \
+            get(CloudwatchConfigType.AGENT.value)()
+        self._put_ssm_param(param_cwa, param_name)
+        self._restart_cloudwatch_agent(param_name)
+
+    def _update_dashboard_config(self):
+        self.put_cloudwatch_dashboard()
+
+    def _update_alarm_config(self):
+        cur_alarms = self.cloudwatch_client.describe_alarms()
+        metric_alarm = cur_alarms.get("MetricAlarms", [])
+        if metric_alarm:
+            to_be_deleted = []
+            for alarm in metric_alarm:
+                to_be_deleted.append(alarm.get("AlarmName"))
+            self.cloudwatch_client.delete_alarms(AlarmNames=to_be_deleted)
+        self.put_cloudwatch_alarm()
+
     @staticmethod
     def resolve_instance_profile_name(config, default_instance_profile_name):
         cwa_cfg_exists = CloudwatchHelper.cloudwatch_config_exists(
             config,
-            "agent",
+            CloudwatchConfigType.AGENT.value,
             "config",
         )
         return CLOUDWATCH_RAY_INSTANCE_PROFILE if cwa_cfg_exists \
@@ -399,7 +609,7 @@ class CloudwatchHelper:
     def resolve_iam_role_name(config, default_iam_role_name):
         cwa_cfg_exists = CloudwatchHelper.cloudwatch_config_exists(
             config,
-            "agent",
+            CloudwatchConfigType.AGENT.value,
             "config",
         )
         return CLOUDWATCH_RAY_IAM_ROLE if cwa_cfg_exists \
@@ -409,7 +619,7 @@ class CloudwatchHelper:
     def resolve_policy_arns(config, default_policy_arns):
         cwa_cfg_exists = CloudwatchHelper.cloudwatch_config_exists(
             config,
-            "agent",
+            CloudwatchConfigType.AGENT.value,
             "config",
         )
         if cwa_cfg_exists:
@@ -420,10 +630,10 @@ class CloudwatchHelper:
         return default_policy_arns
 
     @staticmethod
-    def cloudwatch_config_exists(config, section_name, file_name):
+    def cloudwatch_config_exists(config, config_type, file_name):
         """check if cloudwatch config file exists"""
 
-        cfg = config.get("cloudwatch", {}).get(section_name, {}).get(file_name)
+        cfg = config.get("cloudwatch", {}).get(config_type, {}).get(file_name)
         if cfg:
             assert os.path.isfile(cfg), \
                 "Invalid CloudWatch Config File Path: {}".format(cfg)

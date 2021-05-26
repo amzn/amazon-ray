@@ -10,7 +10,7 @@ from ray.cluster_utils import Cluster
 from ray.exceptions import GetTimeoutError
 
 if (multiprocessing.cpu_count() < 40
-        or ray.utils.get_system_memory() < 50 * 10**9):
+        or ray._private.utils.get_system_memory() < 50 * 10**9):
     warnings.warn("This test must be run on large machines.")
 
 
@@ -296,9 +296,6 @@ def test_pull_request_retry(shutdown_only):
     ray.get(driver.remote())
 
 
-@pytest.mark.skip(
-    reason="This hangs due to a deadlock between a worker getting its "
-    "arguments and the node pulling arguments for the next task queued.")
 @pytest.mark.timeout(30)
 def test_pull_bundles_admission_control(shutdown_only):
     cluster = Cluster()
@@ -333,9 +330,6 @@ def test_pull_bundles_admission_control(shutdown_only):
     ray.get(tasks)
 
 
-@pytest.mark.skip(
-    reason="This hangs due to a deadlock between a worker getting its "
-    "arguments and the node pulling arguments for the next task queued.")
 @pytest.mark.timeout(30)
 def test_pull_bundles_admission_control_dynamic(shutdown_only):
     # This test is the same as test_pull_bundles_admission_control, except that
@@ -358,11 +352,13 @@ def test_pull_bundles_admission_control_dynamic(shutdown_only):
     cluster.wait_for_nodes()
 
     @ray.remote
-    def foo(*args):
+    def foo(i, *args):
+        print("foo", i)
         return
 
     @ray.remote
-    def allocate(*args):
+    def allocate(i):
+        print("allocate", i)
         return np.zeros(object_size, dtype=np.uint8)
 
     args = []
@@ -373,10 +369,43 @@ def test_pull_bundles_admission_control_dynamic(shutdown_only):
         ]
         args.append(task_args)
 
-    tasks = [foo.remote(*task_args) for task_args in args]
-    allocated = [allocate.remote() for _ in range(num_objects)]
+    tasks = [foo.remote(i, *task_args) for i, task_args in enumerate(args)]
+    allocated = [allocate.remote(i) for i in range(num_objects)]
     ray.get(tasks)
     del allocated
+
+
+@pytest.mark.timeout(30)
+def test_max_pinned_args_memory(shutdown_only):
+    cluster = Cluster()
+    cluster.add_node(
+        num_cpus=0,
+        object_store_memory=200 * 1024 * 1024,
+        _system_config={
+            "max_task_args_memory_fraction": 0.7,
+        })
+    ray.init(address=cluster.address)
+    cluster.add_node(num_cpus=3, object_store_memory=100 * 1024 * 1024)
+
+    @ray.remote
+    def f(arg):
+        time.sleep(1)
+        return np.zeros(30 * 1024 * 1024, dtype=np.uint8)
+
+    # Each task arg takes about 30% of the remote node's memory. We should
+    # execute at most 2 at a time to make sure we have room for at least 1 task
+    # output.
+    x = np.zeros(30 * 1024 * 1024, dtype=np.uint8)
+    ray.get([f.remote(ray.put(x)) for _ in range(3)])
+
+    @ray.remote
+    def large_arg(arg):
+        return
+
+    # Executing a task whose args are greater than the memory threshold is
+    # okay.
+    ref = np.zeros(80 * 1024 * 1024, dtype=np.uint8)
+    ray.get(large_arg.remote(ref))
 
 
 if __name__ == "__main__":

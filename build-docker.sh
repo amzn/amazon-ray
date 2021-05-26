@@ -7,8 +7,8 @@ set -x
 
 GPU=""
 BASE_IMAGE="ubuntu:focal"
-WHEEL_URL="http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl"
-PYTHON_VERSION=""
+WHEEL_URL="http://d168575n8y1h5x.cloudfront.net/latest/ray-1.3.0-cp37-cp37m-manylinux2014_x86_64.whl"
+PYTHON_VERSION="3.7.7"
 
 while [[ $# -gt 0 ]]
 do
@@ -16,7 +16,7 @@ key="$1"
 case $key in
     --gpu)
     GPU="-gpu"
-    BASE_IMAGE="nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04"
+    BASE_IMAGE="nvidia/cuda:11.0-cudnn8-runtime-ubuntu18.04"
     ;;
     --no-cache-build)
     NO_CACHE="--no-cache"
@@ -41,6 +41,7 @@ case $key in
     --python-version)
     # Python version to install. e.g. 3.7.7.
     # Changing python versions may require a different wheel.
+    # If not provided defaults to 3.7.7
     shift
     PYTHON_VERSION=$1
     ;;
@@ -59,7 +60,7 @@ for IMAGE in "base-deps" "ray-deps" "ray"
 do
     cp "$WHEEL" "docker/$IMAGE/$(basename "$WHEEL")"
     if [ $OUTPUT_SHA ]; then
-        IMAGE_SHA=$(docker build $NO_CACHE --build-arg GPU="$GPU" --build-arg BASE_IMAGE="$BASE_IMAGE" --build-arg WHEEL_PATH="$(basename "$WHEEL")" -q -t rayproject/$IMAGE:nightly$GPU docker/$IMAGE)
+        IMAGE_SHA=$(docker build $NO_CACHE --build-arg GPU="$GPU" --build-arg BASE_IMAGE="$BASE_IMAGE" --build-arg WHEEL_PATH="$(basename "$WHEEL")" --build-arg PYTHON_VERSION="$PYTHON_VERSION" -q -t rayproject/$IMAGE:nightly$GPU docker/$IMAGE)
         echo "rayproject/$IMAGE:nightly$GPU SHA:$IMAGE_SHA"
     else
         docker build $NO_CACHE  --build-arg GPU="$GPU" --build-arg BASE_IMAGE="$BASE_IMAGE" --build-arg WHEEL_PATH="$(basename "$WHEEL")" --build-arg PYTHON_VERSION="$PYTHON_VERSION" -t rayproject/$IMAGE:nightly$GPU docker/$IMAGE
