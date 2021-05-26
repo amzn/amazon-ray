@@ -79,9 +79,7 @@ CoreWorkerPlasmaStoreProvider::~CoreWorkerPlasmaStoreProvider() {
 
 Status CoreWorkerPlasmaStoreProvider::SetClientOptions(std::string name,
                                                        int64_t limit_bytes) {
-  std::lock_guard<std::mutex> guard(store_client_mutex_);
-  RAY_RETURN_NOT_OK(store_client_.SetClientOptions(name, limit_bytes));
-  return Status::OK();
+  return store_client_.SetClientOptions(name, limit_bytes);
 }
 
 Status CoreWorkerPlasmaStoreProvider::Put(const RayObject &object,
@@ -114,27 +112,20 @@ Status CoreWorkerPlasmaStoreProvider::Create(const std::shared_ptr<Buffer> &meta
                                              const ObjectID &object_id,
                                              const rpc::Address &owner_address,
                                              std::shared_ptr<Buffer> *data) {
-  Status status;
   uint64_t retry_with_request_id = 0;
-  {
-    std::lock_guard<std::mutex> guard(store_client_mutex_);
-    status = store_client_.Create(
-        object_id, owner_address, data_size, metadata ? metadata->Data() : nullptr,
-        metadata ? metadata->Size() : 0, &retry_with_request_id, data,
-        /*device_num=*/0);
-  }
+  Status status = store_client_.Create(
+      object_id, owner_address, data_size, metadata ? metadata->Data() : nullptr,
+      metadata ? metadata->Size() : 0, &retry_with_request_id, data,
+      /*device_num=*/0);
 
   while (retry_with_request_id > 0) {
     // TODO(sang): Use exponential backoff instead.
     std::this_thread::sleep_for(std::chrono::milliseconds(object_store_full_delay_ms_));
-    {
-      std::lock_guard<std::mutex> guard(store_client_mutex_);
-      RAY_LOG(DEBUG) << "Retrying request for object " << object_id << " with request ID "
-                     << retry_with_request_id;
-      status = store_client_.RetryCreate(object_id, retry_with_request_id,
-                                         metadata ? metadata->Data() : nullptr,
-                                         &retry_with_request_id, data);
-    }
+    RAY_LOG(DEBUG) << "Retrying request for object " << object_id << " with request ID "
+                   << retry_with_request_id;
+    status = store_client_.RetryCreate(object_id, retry_with_request_id,
+                                       metadata ? metadata->Data() : nullptr,
+                                       &retry_with_request_id, data);
   }
 
   if (status.IsObjectStoreFull()) {
@@ -163,19 +154,11 @@ Status CoreWorkerPlasmaStoreProvider::Create(const std::shared_ptr<Buffer> &meta
 }
 
 Status CoreWorkerPlasmaStoreProvider::Seal(const ObjectID &object_id) {
-  {
-    std::lock_guard<std::mutex> guard(store_client_mutex_);
-    RAY_RETURN_NOT_OK(store_client_.Seal(object_id));
-  }
-  return Status::OK();
+  return store_client_.Seal(object_id);
 }
 
 Status CoreWorkerPlasmaStoreProvider::Release(const ObjectID &object_id) {
-  {
-    std::lock_guard<std::mutex> guard(store_client_mutex_);
-    RAY_RETURN_NOT_OK(store_client_.Release(object_id));
-  }
-  return Status::OK();
+  return store_client_.Release(object_id);
 }
 
 Status CoreWorkerPlasmaStoreProvider::FetchAndGetFromPlasmaStore(
@@ -189,10 +172,8 @@ Status CoreWorkerPlasmaStoreProvider::FetchAndGetFromPlasmaStore(
       task_id));
 
   std::vector<plasma::ObjectBuffer> plasma_results;
-  {
-    std::lock_guard<std::mutex> guard(store_client_mutex_);
-    RAY_RETURN_NOT_OK(store_client_.Get(batch_ids, timeout_ms, &plasma_results));
-  }
+  RAY_RETURN_NOT_OK(store_client_.Get(batch_ids, timeout_ms, &plasma_results,
+                                      /*is_from_worker=*/true));
 
   // Add successfully retrieved objects to the result map and remove them from
   // the set of IDs to get.
@@ -222,6 +203,37 @@ Status CoreWorkerPlasmaStoreProvider::FetchAndGetFromPlasmaStore(
     }
   }
 
+  return Status::OK();
+}
+
+Status CoreWorkerPlasmaStoreProvider::GetIfLocal(
+    const std::vector<ObjectID> &object_ids,
+    absl::flat_hash_map<ObjectID, std::shared_ptr<RayObject>> *results) {
+  std::vector<plasma::ObjectBuffer> plasma_results;
+  // Since this path is used only for spilling, we should set is_from_worker: false.
+  RAY_RETURN_NOT_OK(store_client_.Get(object_ids, /*timeout_ms=*/0, &plasma_results,
+                                      /*is_from_worker=*/false));
+
+  for (size_t i = 0; i < object_ids.size(); i++) {
+    if (plasma_results[i].data != nullptr || plasma_results[i].metadata != nullptr) {
+      const auto &object_id = object_ids[i];
+      std::shared_ptr<TrackedBuffer> data = nullptr;
+      std::shared_ptr<Buffer> metadata = nullptr;
+      if (plasma_results[i].data && plasma_results[i].data->Size()) {
+        // We track the set of active data buffers in active_buffers_. On destruction,
+        // the buffer entry will be removed from the set via callback.
+        data = std::make_shared<TrackedBuffer>(plasma_results[i].data, buffer_tracker_,
+                                               object_id);
+        buffer_tracker_->Record(object_id, data.get(), get_current_call_site_());
+      }
+      if (plasma_results[i].metadata && plasma_results[i].metadata->Size()) {
+        metadata = plasma_results[i].metadata;
+      }
+      const auto result_object =
+          std::make_shared<RayObject>(data, metadata, std::vector<ObjectID>());
+      (*results)[object_id] = result_object;
+    }
+  }
   return Status::OK();
 }
 
@@ -330,9 +342,7 @@ Status CoreWorkerPlasmaStoreProvider::Get(
 
 Status CoreWorkerPlasmaStoreProvider::Contains(const ObjectID &object_id,
                                                bool *has_object) {
-  std::lock_guard<std::mutex> guard(store_client_mutex_);
-  RAY_RETURN_NOT_OK(store_client_.Contains(object_id, has_object));
-  return Status::OK();
+  return store_client_.Contains(object_id, has_object);
 }
 
 Status CoreWorkerPlasmaStoreProvider::Wait(
@@ -385,7 +395,6 @@ Status CoreWorkerPlasmaStoreProvider::Delete(
 }
 
 std::string CoreWorkerPlasmaStoreProvider::MemoryUsageString() {
-  std::lock_guard<std::mutex> guard(store_client_mutex_);
   return store_client_.DebugString();
 }
 
@@ -409,6 +418,7 @@ void CoreWorkerPlasmaStoreProvider::WarnIfAttemptedTooManyTimes(
         oss << ", ";
       }
       oss << id.Hex();
+      printed++;
     }
     if (printed < remaining.size()) {
       oss << ", etc";
@@ -429,7 +439,7 @@ Status CoreWorkerPlasmaStoreProvider::WarmupStore() {
   RAY_RETURN_NOT_OK(Create(nullptr, 8, object_id, rpc::Address(), &data));
   RAY_RETURN_NOT_OK(Seal(object_id));
   RAY_RETURN_NOT_OK(Release(object_id));
-  RAY_RETURN_NOT_OK(Delete({object_id}, false));
+  RAY_RETURN_NOT_OK(Delete({object_id}, true));
   return Status::OK();
 }
 

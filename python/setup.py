@@ -95,14 +95,9 @@ ray_files += [
 # also update the matching section of requirements/requirements.txt
 # in this directory
 extras = {
-    "serve": [
-        "uvicorn", "flask", "requests", "pydantic<1.7",
-        "dataclasses; python_version < '3.7'", "starlette"
-    ],
-    "tune": [
-        "dataclasses; python_version < '3.7'", "pandas", "tabulate",
-        "tensorboardX"
-    ],
+    "default": ["colorful"],
+    "serve": ["uvicorn", "requests", "pydantic>=1.8", "starlette", "fastapi"],
+    "tune": ["pandas", "tabulate", "tensorboardX"],
     "k8s": ["kubernetes"]
 }
 
@@ -130,14 +125,14 @@ install_requires = [
     "aioredis",
     "click >= 7.0",
     "colorama",
-    "colorful",
+    "dataclasses; python_version < '3.7'",
     "filelock",
     "gpustat",
     "grpcio >= 1.28.1",
     "jsonschema",
     "msgpack >= 1.0.0, < 2.0.0",
     "numpy >= 1.16",
-    "protobuf >= 3.8.0",
+    "protobuf >= 3.15.3",
     "py-spy >= 0.2.0",
     "pyyaml",
     "requests",
@@ -449,7 +444,7 @@ setuptools.setup(
             "ray=ray.scripts.scripts:main",
             "rllib=ray.rllib.scripts:cli [rllib]",
             "tune=ray.tune.scripts:cli",
-            "ray-operator=ray.operator.operator:main",
+            "ray-operator=ray.ray_operator.operator:main",
             "serve=ray.serve.scripts:cli",
         ]
     },

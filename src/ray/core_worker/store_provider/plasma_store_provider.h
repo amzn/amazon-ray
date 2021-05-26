@@ -143,6 +143,18 @@ class CoreWorkerPlasmaStoreProvider {
              absl::flat_hash_map<ObjectID, std::shared_ptr<RayObject>> *results,
              bool *got_exception);
 
+  /// Get objects directly from the local plasma store, without waiting for the
+  /// objects to be fetched from another node. This should only be used
+  /// internally, never by user code.
+  ///
+  /// \param[in] ids The IDs of the objects to get.
+  /// \param[out] results The results will be stored here. A nullptr will be
+  /// added for objects that were not in the local store.
+  /// \return Status OK if the request to the local object store was
+  /// successful.
+  Status GetIfLocal(const std::vector<ObjectID> &ids,
+                    absl::flat_hash_map<ObjectID, std::shared_ptr<RayObject>> *results);
+
   Status Contains(const ObjectID &object_id, bool *has_object);
 
   Status Wait(const absl::flat_hash_set<ObjectID> &object_ids, int num_objects,
@@ -201,7 +213,6 @@ class CoreWorkerPlasmaStoreProvider {
   plasma::PlasmaClient store_client_;
   /// Used to look up a plasma object's owner.
   const std::shared_ptr<ReferenceCounter> reference_counter_;
-  std::mutex store_client_mutex_;
   std::function<Status()> check_signals_;
   std::function<std::string()> get_current_call_site_;
   uint32_t object_store_full_delay_ms_;
