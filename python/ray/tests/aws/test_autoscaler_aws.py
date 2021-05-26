@@ -270,7 +270,8 @@ def test_cloudwatch_agent_update_without_change(ssm_client_stub):
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Agent Config without any change...
+    # given a directive to update a cluster CloudWatch Agent Config without any
+    # change...
     # expect the stored the CloudWatch Agent Config is same as local config
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "agent")
@@ -287,8 +288,10 @@ def test_cloudwatch_agent_update_with_change(ec2_client_stub, ssm_client_stub):
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Agent Config with new changes...
-    # expect the stored the CloudWatch Agent Config is different from local config
+    # given a directive to update a cluster CloudWatch Agent Config with new
+    # changes...
+    # expect the stored the CloudWatch Agent Config is different from local
+    # config
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "agent")
     stubs.get_param_ssm_different(ssm_client_stub, cw_ssm_param_name)
@@ -311,7 +314,8 @@ def test_cloudwatch_agent_update_with_change(ec2_client_stub, ssm_client_stub):
     stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
 
     # given our mocks and the example CloudWatch Agent config as input...
-    # expect CloudWatch Agent configured to use updated file on each cluster node successfully
+    # expect CloudWatch Agent configured to use updated file on each cluster
+    # node successfully
     cloudwatch_helper._update_cloudwatch_config("agent")
 
     # expect no pending responses left in client stub queues
@@ -325,7 +329,8 @@ def test_cloudwatch_agent_update_without_cwa_preinstalled(
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Agent Config without preinstalled agent...
+    # given a directive to update a cluster CloudWatch Agent Config without
+    # preinstalled agent...
     # expect the call to retrive the CloudWatch Agent Config gets an exception
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "agent")
@@ -362,7 +367,8 @@ def test_cloudwatch_agent_update_without_cwa_preinstalled(
     stubs.get_param_ssm_same(ssm_client_stub, cw_ssm_param_name,
                              cloudwatch_helper, "agent")
 
-    # given our mocks and the updated CloudWatch Agent config to install agent...
+    # given our mocks and the updated CloudWatch Agent config to install
+    # agent...
     # expect CloudWatch Agent to be installed on each cluster node successfully
     cloudwatch_helper._update_cloudwatch_config("agent")
 
@@ -377,13 +383,15 @@ def test_cloudwatch_dashboard_update_without_change(ec2_client_stub,
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Dashboard Config without any change...
+    # given a directive to update a cluster CloudWatch Dashboard Config without
+    # any change...
     # expect the stored the CloudWatch Dashboard Config is same as local config
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "dashboard")
     stubs.get_param_ssm_same(ssm_client_stub, cw_ssm_param_name,
                              cloudwatch_helper, "dashboard")
-    # given a directive to update a cluster CloudWatch Dashboard Config without any change...
+    # given a directive to update a cluster CloudWatch Dashboard Config without
+    # any change...
     # expect the stored the CloudWatch Dashboard Config is same as local config
     # given our mocks and the same cloudwatch dashboard config as input...
     # expect no update performed on CloudWatch Dashboard Config
@@ -396,8 +404,10 @@ def test_cloudwatch_dashboard_update_with_change(ssm_client_stub,
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Dashboard Config with new changes...
-    # expect the stored the CloudWatch Dashboard Config is different from local config
+    # given a directive to update a cluster CloudWatch Dashboard Config with
+    # new changes...
+    # expect the stored CloudWatch Dashboard Config is different from local
+    # config
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "dashboard")
     stubs.get_param_ssm_different(ssm_client_stub, cw_ssm_param_name)
@@ -407,7 +417,8 @@ def test_cloudwatch_dashboard_update_with_change(ssm_client_stub,
     stubs.put_parameter_cloudwatch_config(
         ssm_client_stub, cloudwatch_helper.cluster_name, "dashboard")
 
-    # given that updated CloudWatch Dashboard Config is put to Parameter Store...
+    # given that updated CloudWatch Dashboard Config is put to Parameter
+    # Store...
     # expect to make a call to create a new dashboard with the updated config
     stubs.put_cluster_dashboard_success(
         cloudwatch_client_stub,
@@ -428,8 +439,10 @@ def test_cloudwatch_dashboard_update_without_existing_dashboard(
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Dashboard Config that doesn't exist...
-    # expect the call to retrive the CloudWatch Dashboard Config gets an exception
+    # given a directive to update a cluster CloudWatch Dashboard Config that
+    # doesn't exist...
+    # expect the call to retrive the CloudWatch Dashboard Config gets an
+    # exception
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "dashboard")
     stubs.get_param_ssm_exception(ssm_client_stub, cw_ssm_param_name)
@@ -460,7 +473,8 @@ def test_cloudwatch_alarm_without_change(ssm_client_stub):
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Alarm Config without any change...
+    # given a directive to update a cluster CloudWatch Alarm Config without any
+    # change...
     # expect the stored the CloudWatch Alarm Config is same as local config
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "alarm")
@@ -476,14 +490,18 @@ def test_cloudwatch_alarm_with_change(ssm_client_stub, cloudwatch_client_stub):
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update a cluster CloudWatch Alarm Config with new changes...
-    # expect the stored the CloudWatch Alarm Config is different from local config
+    # given a directive to update a cluster CloudWatch Alarm Config with new
+    # changes...
+    # expect the stored the CloudWatch Alarm Config is different from local
+    # config
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "alarm")
     stubs.get_param_ssm_different(ssm_client_stub, cw_ssm_param_name)
 
-    # given a directive to update a cluster CloudWatch Alarm Config with new changes...
-    # expect make calls to retrive the existing alarms and delete these alarms first
+    # given a directive to update a cluster CloudWatch Alarm Config with new
+    # changes...
+    # expect make calls to retrive the existing alarms and delete these alarms
+    # first
     stubs.get_metric_alarm(cloudwatch_client_stub)
     stubs.delete_metric_alarms(cloudwatch_client_stub)
 
@@ -510,7 +528,8 @@ def test_cloudwatch_alarm_update_without_existing_alarms(
     node_ids = ["i-abc", "i-def"]
     cloudwatch_helper = helpers.get_cloudwatch_helper(node_ids)
 
-    # given a directive to update cluster CloudWatch alarms which do not exist...
+    # given a directive to update cluster CloudWatch alarms which do not
+    # exist...
     # expect to get exception as get ssm alarm paramter reponse
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "alarm")
