@@ -22,7 +22,7 @@ updates:
     # Only 5 upgrade PRs open at a time.
     open-pull-requests-limit: 5
     reviewers:
-      - "ray-project/ray-tune"
+      - "amzn/amazon-ray-program"
 
   # RLlib requirements.
   - package-ecosystem: "pip"
@@ -44,4 +44,4 @@ updates:
     # Only n upgrade PRs open at a time.
     open-pull-requests-limit: 3
     reviewers:
-      - "ray-project/ray-rllib"
+      - "amzn/amazon-ray-program"
