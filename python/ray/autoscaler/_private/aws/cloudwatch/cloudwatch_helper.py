@@ -112,7 +112,7 @@ class CloudwatchHelper:
         try:
             logger.info(
                 "Waiting for EC2 instance health checks to complete before "
-                "installing CloudWatch Unified Agent. This may take a few "
+                "configuring CloudWatch Unified Agent. This may take a few "
                 "minutes...")
             waiter = self.ec2_client.get_waiter("instance_status_ok")
             waiter.wait(InstanceIds=self.node_ids)
@@ -129,7 +129,7 @@ class CloudwatchHelper:
             "version": ["latest"]
         }
         logger.info(
-            "Installing the CloudWatch Unified Agent package on {} nodes. "
+            "Installing the CloudWatch Unified Agent package on {} node(s). "
             "This may take a few minutes as we wait for all package updates "
             "to complete...".format(len(self.node_ids)))
         try:
@@ -138,7 +138,7 @@ class CloudwatchHelper:
                 parameters_cwa_install,
             )
             logger.info(
-                "Successfully installed CloudWatch Unified Agent on {} nodes".
+                "Successfully installed CloudWatch Unified Agent on {} node(s)".
                 format(len(self.node_ids)))
         except botocore.exceptions.WaiterError as e:
             logger.error(
@@ -159,8 +159,9 @@ class CloudwatchHelper:
         self._put_ssm_param(cwa_config, cwa_config_ssm_param_name)
 
         # satisfy collectd preconditions before starting cloudwatch agent
-        logger.info("Preparing to start CloudWatch Unified Agent on {} nodes."
-                    .format(len(self.node_ids)))
+        logger.info(
+            "Preparing to start CloudWatch Unified Agent on {} node(s)."
+            .format(len(self.node_ids)))
         parameters_run_shell = {
             "commands": [
                 "mkdir -p /usr/share/collectd/",
@@ -171,7 +172,7 @@ class CloudwatchHelper:
             "AWS-RunShellScript",
             parameters_run_shell,
         )
-        self._start_cloudwatch_agent(cwa_config_ssm_param_name)
+        self._restart_cloudwatch_agent(cwa_config_ssm_param_name)
 
     def put_cloudwatch_dashboard(self):
         """put dashboard to cloudwatch console"""
@@ -249,13 +250,15 @@ class CloudwatchHelper:
             self.node_ids,
         )
 
-    def _ssm_command_waiter(self, document_name, parameters):
+    def _ssm_command_waiter(self, document_name, parameters,
+                            retry_failed=True):
         """ wait for SSM command to complete on all cluster nodes """
 
         # This waiter differs from the built-in SSM.Waiter by
         # optimistically waiting for the command invocation to
         # exist instead of failing immediately, and by resubmitting
-        # any failed command until all retry attempts are exhausted.
+        # any failed command until all retry attempts are exhausted
+        # by default.
         response = self._send_command_to_all_nodes(
             document_name,
             parameters,
@@ -310,14 +313,19 @@ class CloudwatchHelper:
                             last_response=cmd_invocation,
                         )
                     if cmd_invocation["Status"] == "Failed":
-                        logger.debug(
-                            "SSM Command ID {} failed. Retrying in {} seconds."
-                            .format(command_id, delay_seconds))
-                        response = self._send_command_to_nodes(
-                            document_name, parameters, node_id)
-                        command_id = response["Command"]["CommandId"]
-                        logger.debug("Sent SSM command ID {} to node {}"
-                                     .format(command_id, node_id))
+                        logger.debug(f"SSM Command ID {command_id} failed.")
+                        if retry_failed:
+                            logger.debug(
+                                f"Retrying in {delay_seconds} seconds.")
+                            response = self._send_command_to_nodes(
+                                document_name, parameters, node_id)
+                            command_id = response["Command"]["CommandId"]
+                            logger.debug("Sent SSM command ID {} to node {}"
+                                         .format(command_id, node_id))
+                        else:
+                            logger.debug(
+                                f"Ignoring Command ID {command_id} failure.")
+                            break
                 time.sleep(delay_seconds)
 
     def _replace_config_variables(self, string, node_id, cluster_name, region):
@@ -404,9 +412,8 @@ class CloudwatchHelper:
 
     def _set_cloudwatch_ssm_config_param(self, parameter_name, config_type):
         """
-        get cloudwatch config for the given param
-        and config type from SSM if it exists
-        and put it in the SSM param store if it does not
+        get cloudwatch config for the given param and config type from SSM if it
+        exists, put it in the SSM param store if not
         """
         try:
             parameter_value = self._get_ssm_param(parameter_name)
@@ -472,7 +479,7 @@ class CloudwatchHelper:
         return ssm_config_param_name
 
     def _put_ssm_param(self, parameter, parameter_name):
-        """upload cloudwatch agent config to the SSM parameter store"""
+        """upload cloudwatch config to the SSM parameter store"""
         self.ssm_client.put_parameter(
             Name=parameter_name,
             Type="String",
@@ -541,22 +548,32 @@ class CloudwatchHelper:
 
     def _restart_cloudwatch_agent(self, cwa_param_name):
         """restart cloudwatch agent"""
-        logger.info("Stopping CloudWatch Unified Agent package on {} nodes."
+        logger.info(
+            "Restarting CloudWatch Unified Agent package on {} node(s)."
+            .format(len(self.node_ids)))
+        self._stop_cloudwatch_agent()
+        self._start_cloudwatch_agent(cwa_param_name)
+
+    def _stop_cloudwatch_agent(self):
+        """stop cloudwatch agent"""
+        logger.info("Stopping CloudWatch Unified Agent package on {} node(s)."
                     .format(len(self.node_ids)))
         parameters_stop_cwa = {
             "action": ["stop"],
             "mode": ["ec2"],
-            "optionalConfigurationSource": ["ssm"],
         }
+        # don't retry failed stop commands (there's not always an agent to stop)
         self._ssm_command_waiter(
             "AmazonCloudWatch-ManageAgent",
             parameters_stop_cwa,
+            False,
         )
-        self._start_cloudwatch_agent(cwa_param_name)
+        logger.info("CloudWatch Unified Agent stopped on {} node(s).".format(
+            len(self.node_ids)))
 
     def _start_cloudwatch_agent(self, cwa_param_name):
         """start cloudwatch agent"""
-        logger.info("Starting CloudWatch Unified Agent package on {} nodes."
+        logger.info("Starting CloudWatch Unified Agent package on {} node(s)."
                     .format(len(self.node_ids)))
         parameters_start_cwa = {
             "action": ["configure"],
@@ -570,7 +587,7 @@ class CloudwatchHelper:
             parameters_start_cwa,
         )
         logger.info(
-            "CloudWatch Unified Agent started successfully on all nodes."
+            "CloudWatch Unified Agent started successfully on {} node(s)."
             .format(len(self.node_ids)))
 
     def _update_agent_config(self):
