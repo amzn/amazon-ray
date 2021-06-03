@@ -196,7 +196,7 @@ def send_command_cwa_install(ssm_client_stub, node_ids):
     return command_id
 
 
-def list_command_invocations_success(ssm_client_stub, node_ids, cmd_id):
+def list_command_invocations_status(ssm_client_stub, node_ids, cmd_id, status):
     for node_id in node_ids:
         ssm_client_stub.add_response(
             "list_command_invocations",
@@ -205,8 +205,18 @@ def list_command_invocations_success(ssm_client_stub, node_ids, cmd_id):
                 "InstanceId": node_id
             },
             service_response={"CommandInvocations": [{
-                "Status": "Success"
+                "Status": status
             }]})
+
+
+def list_command_invocations_failed(ssm_client_stub, node_ids, cmd_id):
+    status = "Failed"
+    list_command_invocations_status(ssm_client_stub, node_ids, cmd_id, status)
+
+
+def list_command_invocations_success(ssm_client_stub, node_ids, cmd_id):
+    status = "Success"
+    list_command_invocations_status(ssm_client_stub, node_ids, cmd_id, status)
 
 
 def put_parameter_cloudwatch_config(ssm_client_stub, cluster_name,
@@ -282,7 +292,6 @@ def send_command_stop_cwa(ssm_client_stub, node_ids):
             "Parameters": {
                 "action": ["stop"],
                 "mode": ["ec2"],
-                "optionalConfigurationSource": ["ssm"]
             }
         },
         service_response={"Command": {

@@ -21,19 +21,19 @@ if [ $? -eq 0 ]; then
   # TODO remove the version number hardcoding from this script
   # download the latest prometheus
   ray exec "$AUTOSCALER_CONFIG_FILE" "sudo wget https://github.com/prometheus/prometheus/releases/download/v2.25.0/prometheus-2.25.0.linux-amd64.tar.gz -P /opt"
-  ray exec "$AUTOSCALER_CONFIG_FILE" "cd /opt && sudo tar xvfz prometheus-2.25.0.linux-amd64.tar.gz"
+  ray exec "$AUTOSCALER_CONFIG_FILE" "cd /opt && sudo tar xvfz prometheus-2.25.0.linux-amd64.tar.gz && sudo mv prometheus-2.25.0.linux-amd64 prometheus && sudo rm prometheus-2.25.0.linux-amd64.tar.gz"
   echo "Successfully installed prometheus on head node"
 
   # replace the default prometheus server configuration with ray services discovery supported configuration
-  ray exec "$AUTOSCALER_CONFIG_FILE" "sudo cp --remove-destination /tmp/prometheus.yml /opt/prometheus-2.25.0.linux-amd64"
+  ray exec "$AUTOSCALER_CONFIG_FILE" "sudo cp --remove-destination /tmp/prometheus.yml /opt/prometheus"
   echo "Successfully configured prometheus on head node"
 
   # start the prometheus server
-  ray exec "$AUTOSCALER_CONFIG_FILE" "cd /opt/prometheus-2.25.0.linux-amd64 && sudo ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --log.level=info &"
+  ray exec "$AUTOSCALER_CONFIG_FILE" "cd /opt/prometheus && sudo ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --log.level=info &"
   echo "Successfully started prometheus on head node"
 
   # restart the cloudwatch agent with prometheus integrated
-  echo "Restarting cloudwatch agent...this may take a few minutes."
+  echo "Restarting cloudwatch agent. This may take a few minutes..."
   ray exec "$AUTOSCALER_CONFIG_FILE" "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a stop"
   ray exec "$AUTOSCALER_CONFIG_FILE" "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:ray_cloudwatch_agent_config_$CLUSTER_NAME"
 
