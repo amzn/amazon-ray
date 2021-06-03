@@ -199,12 +199,16 @@ def test_cloudwatch_agent_setup(ec2_client_stub, ssm_client_stub):
     # expect to wait for the command to complete successfully on every node
     stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
 
+    cw_ssm_param_name = helpers.get_ssm_param_name(
+        cloudwatch_helper.cluster_name, "agent")
     # given that all CloudWatch Agent start preconditions are satisfied...
-    # expect to send an SSM command to start CloudWatch Agent on all nodes
-    parameter_name = helpers.get_ssm_param_name(cloudwatch_helper.cluster_name,
-                                                "agent")
+    # expect to send an SSM command to restart CloudWatch Agent on all nodes
+    cmd_id = stubs.send_command_stop_cwa(ssm_client_stub, node_ids)
+    # given a SSM command to stop CloudWatch Agent sent to all nodes...
+    # expect to wait for the command to complete successfully on every node
+    stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
     cmd_id = stubs.send_command_start_cwa(ssm_client_stub, node_ids,
-                                          parameter_name)
+                                          cw_ssm_param_name)
     # given a SSM command to start CloudWatch Agent sent to all nodes...
     # expect to wait for the command to complete successfully on every node
     stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
@@ -331,7 +335,7 @@ def test_cloudwatch_agent_update_without_cwa_preinstalled(
 
     # given a directive to update a cluster CloudWatch Agent Config without
     # preinstalled agent...
-    # expect the call to retrive the CloudWatch Agent Config gets an exception
+    # expect the call to retrieve the CloudWatch Agent Config gets an exception
     cw_ssm_param_name = helpers.get_ssm_param_name(
         cloudwatch_helper.cluster_name, "agent")
     stubs.get_param_ssm_exception(ssm_client_stub, cw_ssm_param_name)
@@ -357,7 +361,11 @@ def test_cloudwatch_agent_update_without_cwa_preinstalled(
     stubs.list_command_invocations_success(ssm_client_stub, node_ids, cmd_id)
 
     # given that all CloudWatch Agent start preconditions are satisfied...
-    # expect to send an SSM command to start CloudWatch Agent on all nodes
+    # expect to send an SSM command to restart CloudWatch Agent on all nodes
+    cmd_id = stubs.send_command_stop_cwa(ssm_client_stub, node_ids)
+    # given a SSM command to stop CloudWatch Agent sent to all nodes...
+    # expect to wait for the command to fail on every node
+    stubs.list_command_invocations_failed(ssm_client_stub, node_ids, cmd_id)
     cmd_id = stubs.send_command_start_cwa(ssm_client_stub, node_ids,
                                           cw_ssm_param_name)
     # given a SSM command to start CloudWatch Agent sent to all nodes...

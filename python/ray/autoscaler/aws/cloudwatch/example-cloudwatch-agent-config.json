@@ -10,11 +10,11 @@
    "logs":{
       "metrics_collected": {
         "prometheus": {
-          "log_group_name": "{cluster_name}-Prometheus",
-          "prometheus_config_path": "/opt/prometheus-2.25.0.linux-amd64/prometheus.yml",
+          "log_group_name": "{cluster_name}-ray-prometheus",
+          "prometheus_config_path": "/opt/prometheus/prometheus.yml",
           "emf_processor": {
             "metric_declaration_dedup": true,
-            "metric_namespace": "{cluster_name}-Prometheus",
+            "metric_namespace": "{cluster_name}-ray-prometheus",
             "metric_unit":{
               "python_gc_collections_total": "Count",
               "python_gc_objects": "Count",
