@@ -36,5 +36,14 @@ worker_nodes:
     SecurityGroupIds:
 
 file_mounts: {
-    "/tmp" : "cloudwatch/prometheus.yml"
+    "~/" : "cloudwatch/prometheus.yml",
+    "/tmp" : "cloudwatch/cloudwatch_waiter_for_prometheus_metrics.sh"
 }
+
+head_setup_commands:
+    - sudo mkdir -p /opt/prometheus
+    - sudo cp ~/prometheus.yml /opt/prometheus
+    - sudo cp /tmp/cloudwatch_waiter_for_prometheus_metrics.sh /opt/prometheus
+    - sudo chmod +x /opt/prometheus/cloudwatch_waiter_for_prometheus_metrics.sh
+    - sudo snap install jq
+    - nohup sh /opt/prometheus/cloudwatch_waiter_for_prometheus_metrics.sh `jq -r .cluster_name ~/ray_bootstrap_config.yaml` > /dev/null 2>&1 &
