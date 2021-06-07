@@ -42,3 +42,4 @@ head_setup_commands:
     - sudo mv -f /tmp/ray_prometheus_waiter.sh /opt/aws/amazon-cloudwatch-agent/bin
     - sudo chmod +x /opt/aws/amazon-cloudwatch-agent/bin/ray_prometheus_waiter.sh
     - nohup sudo sh -c "/opt/aws/amazon-cloudwatch-agent/bin/ray_prometheus_waiter.sh `cat ~/ray_bootstrap_config.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["cluster_name"])' ` >> '/opt/aws/amazon-cloudwatch-agent/logs/ray_prometheus_waiter.out' 2>> '/opt/aws/amazon-cloudwatch-agent/logs/ray_prometheus_waiter.err'" &
+
