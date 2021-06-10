@@ -4,7 +4,7 @@ import json
 import os
 import logging
 import time
-import binascii
+import hashlib
 from enum import Enum
 from ray.autoscaler._private.aws.utils import client_cache
 
@@ -54,56 +54,23 @@ class CloudwatchHelper:
         }
 
     def setup_from_config(self):
-        # check if user specified a cloudwatch agent config file path.
-        # if so, install and start cloudwatch agent
-        if CloudwatchHelper.cloudwatch_config_exists(
-                self.provider_config,
-                CloudwatchConfigType.AGENT.value,
-                "config",
-        ):
-            self.ssm_install_cloudwatch_agent()
-
-        # check if user specified a cloudwatch dashboard config file path.
-        # if so, put cloudwatch dashboard
-        if CloudwatchHelper.cloudwatch_config_exists(
-                self.provider_config,
-                CloudwatchConfigType.DASHBOARD.value,
-                "config",
-        ):
-            self.put_cloudwatch_dashboard()
-
-        # check if user specified a cloudwatch alarm config file path.
-        # if so, put cloudwatch alarms
-        if CloudwatchHelper.cloudwatch_config_exists(
-                self.provider_config,
-                CloudwatchConfigType.ALARM.value,
-                "config",
-        ):
-            self.put_cloudwatch_alarm()
+        for config_type in CloudwatchConfigType:
+            if CloudwatchHelper.cloudwatch_config_exists(
+                    self.provider_config,
+                    config_type.value,
+                    "config",
+            ):
+                self.CLOUDWATCH_CONFIG_TYPE_TO_CLOUDWATCH_SETUP_FUNC. \
+                    get(config_type.value)()
 
     def update_from_config(self):
-        """Update SSM parameter store cwa config file and restart cwa"""
-        if CloudwatchHelper.cloudwatch_config_exists(
-                self.provider_config,
-                CloudwatchConfigType.AGENT.value,
-                "config",
-        ):
-            self._update_cloudwatch_config(CloudwatchConfigType.AGENT.value)
-
-        if CloudwatchHelper.cloudwatch_config_exists(
-                self.provider_config,
-                CloudwatchConfigType.DASHBOARD.value,
-                "config",
-        ):
-            self._update_cloudwatch_config(
-                CloudwatchConfigType.DASHBOARD.value)
-
-        if CloudwatchHelper.cloudwatch_config_exists(
-                self.provider_config,
-                CloudwatchConfigType.ALARM.value,
-                "config",
-        ):
-            self._update_cloudwatch_config(CloudwatchConfigType.ALARM.value)
+        for config_type in CloudwatchConfigType:
+            if CloudwatchHelper.cloudwatch_config_exists(
+                    self.provider_config,
+                    config_type.value,
+                    "config",
+            ):
+                self._update_cloudwatch_config(config_type.value)
 
     def ssm_install_cloudwatch_agent(self):
         """Install and Start CloudWatch Agent via Systems Manager (SSM)"""
@@ -138,8 +105,8 @@ class CloudwatchHelper:
                 parameters_cwa_install,
             )
             logger.info(
-                "Successfully installed CloudWatch Unified Agent on {} node(s)".
-                format(len(self.node_ids)))
+                "Successfully installed CloudWatch Unified Agent on {} "
+                "node(s)".format(len(self.node_ids)))
         except botocore.exceptions.WaiterError as e:
             logger.error(
                 "Failed while waiting for SSM CloudWatch Unified Agent "
@@ -342,13 +309,8 @@ class CloudwatchHelper:
             string = string.replace("{region}", region)
         return string
 
-    def _replace_all_config_variables(
-            self,
-            collection,
-            node_id,
-            cluster_name,
-            region,
-    ):
+    def _replace_all_config_variables(self, collection, node_id, cluster_name,
+                                      region):
         """
         Replace known config variable occurrences in the input collection.
         The input collection must be either a dict or list.
@@ -359,45 +321,22 @@ class CloudwatchHelper:
         """
 
         modified_value_count = 0
-        if type(collection) is dict:
-            for key, value in collection.items():
-                if type(value) is dict or type(value) is list:
-                    (collection[key], modified_count) = \
-                        self._replace_all_config_variables(
-                            collection[key],
-                            node_id,
-                            cluster_name,
-                            region
-                        )
-                    modified_value_count += modified_count
-                elif type(value) is str:
-                    collection[key] = self._replace_config_variables(
-                        value,
-                        node_id,
-                        cluster_name,
-                        region,
-                    )
-                    modified_value_count += (collection[key] != value)
-        if type(collection) is list:
-            for i in range(len(collection)):
-                if type(collection[i]) is dict or type(collection[i]) is list:
-                    (collection[i], modified_count) = \
-                        self._replace_all_config_variables(
-                            collection[i],
-                            node_id,
-                            cluster_name,
-                            region
-                        )
-                    modified_value_count += modified_count
-                elif type(collection[i]) is str:
-                    value = collection[i]
-                    collection[i] = self._replace_config_variables(
-                        value,
-                        node_id,
-                        cluster_name,
-                        region,
-                    )
-                    modified_value_count += (collection[i] != value)
+        for key in collection:
+            if type(collection) is dict:
+                value = collection.get(key)
+                index_key = key
+            elif type(collection) is list:
+                value = key
+                index_key = collection.index(key)
+            if type(value) is str:
+                collection[index_key] = self._replace_config_variables(
+                    value, node_id, cluster_name, region)
+                modified_value_count += (collection[index_key] != value)
+            elif type(value) is dict or type(value) is list:
+                collection[index_key], modified_count = self.\
+                    _replace_all_config_variables(
+                    value, node_id, cluster_name, region)
+                modified_value_count += modified_count
         return collection, modified_value_count
 
     def _load_config_file(self, config_type):
@@ -412,8 +351,8 @@ class CloudwatchHelper:
 
     def _set_cloudwatch_ssm_config_param(self, parameter_name, config_type):
         """
-        get cloudwatch config for the given param and config type from SSM if it
-        exists, put it in the SSM param store if not
+        get cloudwatch config for the given param and config type from SSM
+        if it exists, put it in the SSM param store if not
         """
         try:
             parameter_value = self._get_ssm_param(parameter_name)
@@ -440,19 +379,21 @@ class CloudwatchHelper:
         cwa_parameter = res.get("Value", {})
         return cwa_parameter
 
-    def _crc32_json(self, value):
-        """calculate the json string crc32 checksum"""
+    def _sha1_hash_json(self, value):
+        """calculate the json string sha1 hash"""
+        hash = hashlib.new("sha1")
         binary_value = value.encode("ascii")
-        crc = binascii.crc32(binary_value)
-        return crc
+        hash.update(binary_value)
+        sha1_res = hash.hexdigest()
+        return sha1_res
 
-    def _crc32_file(self, config_type):
-        """calculate the file crc32 checksum"""
+    def _sha1_hash_file(self, config_type):
+        """calculate the config file sha1 hash"""
         config = self.CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC. \
             get(config_type)()
         value = json.dumps(config)
-        crc = self._crc32_json(value)
-        return crc
+        sha1_res = self._sha1_hash_json(value)
+        return sha1_res
 
     def _update_cloudwatch_config(self, config_type):
         """
@@ -462,8 +403,8 @@ class CloudwatchHelper:
         param_name = self._get_ssm_param_name(config_type)
         cw_config_ssm = self._set_cloudwatch_ssm_config_param(
             param_name, config_type)
-        cur_cw_config_crc = self._crc32_file(config_type)
-        ssm_cw_config_crc = self._crc32_json(cw_config_ssm)
+        cur_cw_config_crc = self._sha1_hash_file(config_type)
+        ssm_cw_config_crc = self._sha1_hash_json(cw_config_ssm)
         # check if user updated cloudwatch related config files.
         # if so, perform corresponding actions.
         if cur_cw_config_crc != ssm_cw_config_crc:
@@ -562,7 +503,8 @@ class CloudwatchHelper:
             "action": ["stop"],
             "mode": ["ec2"],
         }
-        # don't retry failed stop commands (there's not always an agent to stop)
+        # don't retry failed stop commands
+        # (there's not always an agent to stop)
         self._ssm_command_waiter(
             "AmazonCloudWatch-ManageAgent",
             parameters_stop_cwa,
