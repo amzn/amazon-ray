@@ -7,36 +7,34 @@
 namespace ray {
 namespace api {
 
-template <typename ActorType>
+template <typename F>
+using GetActorType = absl::remove_pointer_t<boost::callable_traits::return_type_t<F>>;
+
+template <typename F>
 class ActorCreator {
  public:
-  ActorCreator();
+  ActorCreator() {}
 
-  ActorCreator(RayRuntime *runtime, RemoteFunctionPtrHolder ptr,
-               std::vector<std::unique_ptr<::ray::TaskArg>> &&args);
+  ActorCreator(RayRuntime *runtime, RemoteFunctionHolder remote_function_holder)
+      : runtime_(runtime), remote_function_holder_(remote_function_holder) {}
 
-  ActorHandle<ActorType> Remote();
+  template <typename... Args>
+  ActorHandle<GetActorType<F>> Remote(Args... args);
 
  private:
   RayRuntime *runtime_;
-  RemoteFunctionPtrHolder ptr_;
+  RemoteFunctionHolder remote_function_holder_;
   std::vector<std::unique_ptr<::ray::TaskArg>> args_;
 };
 
 // ---------- implementation ----------
-
-template <typename ActorType>
-ActorCreator<ActorType>::ActorCreator() {}
-
-template <typename ActorType>
-ActorCreator<ActorType>::ActorCreator(RayRuntime *runtime, RemoteFunctionPtrHolder ptr,
-                                      std::vector<std::unique_ptr<::ray::TaskArg>> &&args)
-    : runtime_(runtime), ptr_(ptr), args_(std::move(args)) {}
-
-template <typename ActorType>
-ActorHandle<ActorType> ActorCreator<ActorType>::Remote() {
-  auto returned_actor_id = runtime_->CreateActor(ptr_, args_);
-  return ActorHandle<ActorType>(returned_actor_id);
+template <typename F>
+template <typename... Args>
+ActorHandle<GetActorType<F>> ActorCreator<F>::Remote(Args... args) {
+  StaticCheck<F, Args...>();
+  Arguments::WrapArgs(&args_, args...);
+  auto returned_actor_id = runtime_->CreateActor(remote_function_holder_, args_);
+  return ActorHandle<GetActorType<F>>(returned_actor_id);
 }
 }  // namespace api
 }  // namespace ray

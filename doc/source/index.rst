@@ -1,6 +1,8 @@
 What is Ray?
 ============
 
+.. tip:: Please take 5 minutes to take the `Ray Pulse Community Survey <https://www.surveymonkey.com/r/ray-community-pulse-2021>`_!
+
 .. include:: ray-overview/basics.rst
 
 Getting Started with Ray
@@ -260,10 +262,9 @@ Papers
    serve/index.rst
    serve/tutorial.rst
    serve/core-apis.rst
+   serve/http-servehandle.rst
    serve/deployment.rst
    serve/ml-models.rst
-   serve/advanced-traffic.rst
-   serve/advanced.rst
    serve/performance.rst
    serve/architecture.rst
    serve/tutorials/index.rst
@@ -343,6 +344,7 @@ Papers
    ray-metrics.rst
    ray-debugging.rst
    ray-logging.rst
+   ray-tracing.rst
 
 .. toctree::
    :hidden:

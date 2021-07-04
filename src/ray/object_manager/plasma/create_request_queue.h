@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-
 #include "ray/common/status.h"
 #include "ray/object_manager/common.h"
 #include "ray/object_manager/plasma/common.h"
@@ -136,7 +135,7 @@ class CreateRequestQueue {
   /// Process a single request. Sets the request's error result to the error
   /// returned by the request handler inside. Returns OK if the request can be
   /// finished.
-  bool ProcessRequest(std::unique_ptr<CreateRequest> &request);
+  Status ProcessRequest(std::unique_ptr<CreateRequest> &request);
 
   /// Finish a queued request and remove it from the queue.
   void FinishRequest(std::list<std::unique_ptr<CreateRequest>>::iterator request_it);
@@ -152,7 +151,7 @@ class CreateRequestQueue {
   /// A callback to trigger object spilling. It tries to spill objects upto max
   /// throughput. It returns true if space is made by object spilling, and false if
   /// there's no more space to be made.
-  ray::SpillObjectsCallback spill_objects_callback_;
+  const ray::SpillObjectsCallback spill_objects_callback_;
 
   /// A callback to trigger global GC in the cluster if the object store is
   /// full.

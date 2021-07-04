@@ -3,26 +3,26 @@
 # Please keep these sorted alphabetically, but start with the
 # root directory.
 # --------------------------------------------------------------------
-# py_test(
-#     name = "plot_hyperparameter",
-#     size = "small",
-#     srcs = ["examples/plot_hyperparameter.py"],
-#     tags = ["exclusive"]
-# )
-
-# py_test(
-#     name = "plot_parameter_server",
-#     size = "medium",
-#     srcs = ["examples/plot_parameter_server.py"],
-#     tags = ["exclusive"]
-# )
-
 py_test(
-    name = "plot_pong_example",
-    size = "large",
-    srcs = ["examples/plot_pong_example.py"],
+    name = "plot_hyperparameter",
+    size = "small",
+    srcs = ["examples/plot_hyperparameter.py"],
     tags = ["exclusive"]
 )
+
+py_test(
+    name = "plot_parameter_server",
+    size = "medium",
+    srcs = ["examples/plot_parameter_server.py"],
+    tags = ["exclusive"]
+)
+
+#py_test(
+#    name = "plot_pong_example",
+#    size = "large",
+#    srcs = ["examples/plot_pong_example.py"],
+#    tags = ["exclusive"]
+#)
 
 py_test(
     name = "progress_bar",
@@ -71,11 +71,11 @@ py_test(
     args = ["--smoke-test"]
 )
 
-# py_test(
-#     name = "tune_serve_integration_mnist",
-#     size = "medium",
-#     main = "source/tune/_tutorials/tune-serve-integration-mnist.py",
-#     srcs = ["source/tune/_tutorials/tune-serve-integration-mnist.py"],
-#     tags = ["exclusive", "example"],
-#     args = ["--smoke-test", "--from_scratch", "--day 0"]
-# )
+py_test(
+    name = "tune_serve_integration_mnist",
+    size = "medium",
+    main = "source/tune/_tutorials/tune-serve-integration-mnist.py",
+    srcs = ["source/tune/_tutorials/tune-serve-integration-mnist.py"],
+    tags = ["exclusive", "example"],
+    args = ["--smoke-test", "--from_scratch", "--day 0"]
+)

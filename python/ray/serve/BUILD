@@ -18,7 +18,39 @@ py_test(
 )
 
 py_test(
+    name = "test_api_new",
+    size = "large",
+    srcs = serve_tests_srcs,
+    tags = ["exclusive"],
+    deps = [":serve_lib"],
+)
+
+py_test(
     name = "test_deploy",
+    size = "large",
+    srcs = serve_tests_srcs,
+    tags = ["exclusive"],
+    deps = [":serve_lib"],
+)
+
+py_test(
+    name = "test_get_deployment",
+    size = "medium",
+    srcs = serve_tests_srcs,
+    tags = ["exclusive"],
+    deps = [":serve_lib"],
+)
+
+py_test(
+    name = "test_http_prefix_matching",
+    size = "small",
+    srcs = serve_tests_srcs,
+    tags = ["exclusive"],
+    deps = [":serve_lib"],
+)
+
+py_test(
+    name = "test_http_routes",
     size = "medium",
     srcs = serve_tests_srcs,
     tags = ["exclusive"],
@@ -139,7 +171,7 @@ py_test(
     name = "test_router",
     size = "small",
     srcs = serve_tests_srcs,
-    tags = ["exclusive"],
+    tags = ["exclusive", "flaky"],
     deps = [":serve_lib"],
 )
 
@@ -168,6 +200,14 @@ py_test(
 )
 
 py_test(
+    name = "test_cluster",
+    size = "medium",
+    srcs = serve_tests_srcs,
+    tags = ["exclusive"],
+    deps = [":serve_lib"],
+)
+
+py_test(
     name = "test_util",
     size = "small",
     srcs = serve_tests_srcs,
@@ -184,7 +224,7 @@ py_test(
 )
 
 py_test(
-    name = "test_pydantic_serialization",
+    name = "test_fastapi",
     size = "small",
     srcs = serve_tests_srcs,
     tags = ["exclusive"],
@@ -192,7 +232,7 @@ py_test(
 )
 
 py_test(
-    name = "test_fastapi",
+    name = "test_cli",
     size = "small",
     srcs = serve_tests_srcs,
     tags = ["exclusive"],

@@ -1,4 +1,5 @@
 import copy
+from concurrent.futures import ThreadPoolExecutor
 import datetime
 import hashlib
 import json
@@ -25,7 +26,8 @@ from ray.experimental.internal_kv import _internal_kv_put
 import ray._private.services as services
 from ray.autoscaler.node_provider import NodeProvider
 from ray.autoscaler._private.constants import \
-    AUTOSCALER_RESOURCE_REQUEST_CHANNEL
+    AUTOSCALER_RESOURCE_REQUEST_CHANNEL, \
+    MAX_PARALLEL_SHUTDOWN_WORKERS
 from ray.autoscaler._private.util import validate_config, hash_runtime_conf, \
     hash_launch_conf, prepare_config
 from ray.autoscaler._private.providers import _get_node_provider, \
@@ -51,6 +53,8 @@ from ray.util.debug import log_once
 
 import ray.autoscaler._private.subprocess_output_util as cmd_output_util
 from ray.autoscaler._private.load_metrics import LoadMetricsSummary
+from ray.autoscaler._private.local.config import is_local_manual_node_provider
+from ray.autoscaler._private.local.config import sync_state
 from ray.autoscaler._private.autoscaler import AutoscalerSummary
 from ray.autoscaler._private.util import format_info_string, \
     format_info_string_no_node_types
@@ -188,7 +192,6 @@ def create_or_update_cluster(
         cli_logger.abort(
             "Provided cluster configuration file ({}) does not exist",
             cf.bold(config_file))
-        raise
     except yaml.parser.ParserError as e:
         handle_yaml_error(e)
         raise
@@ -209,8 +212,6 @@ def create_or_update_cluster(
                 k for k in _NODE_PROVIDERS.keys()
                 if _NODE_PROVIDERS[k] is not None
             ]))
-        raise NotImplementedError("Unsupported provider {}".format(
-            config["provider"]))
 
     printed_overrides = False
 
@@ -406,7 +407,12 @@ def teardown_cluster(config_file: str, yes: bool, workers_only: bool,
                 file_mounts_contents_hash="",
                 is_head_node=False,
                 docker_config=config.get("docker"))
-            _exec(updater, cmd=f"docker stop {container_name}", run_env="host")
+
+            _exec(
+                updater,
+                f"docker stop {container_name}",
+                with_output=False,
+                run_env="host")
         except Exception:
             cli_logger.warning(f"Docker stop failed on {node}")
 
@@ -416,9 +422,21 @@ def teardown_cluster(config_file: str, yes: bool, workers_only: bool,
 
     container_name = config.get("docker", {}).get("container_name")
     if container_name:
-        for node in A:
-            run_docker_stop(node, container_name)
 
+        # This is to ensure that the parallel SSH calls below do not mess with
+        # the users terminal.
+        output_redir = cmd_output_util.is_output_redirected()
+        cmd_output_util.set_output_redirected(True)
+        allow_interactive = cmd_output_util.does_allow_interactive()
+        cmd_output_util.set_allow_interactive(False)
+
+        with ThreadPoolExecutor(
+                max_workers=MAX_PARALLEL_SHUTDOWN_WORKERS) as executor:
+            for node in A:
+                executor.submit(
+                    run_docker_stop, node=node, container_name=container_name)
+        cmd_output_util.set_output_redirected(output_redir)
+        cmd_output_util.set_allow_interactive(allow_interactive)
     with LogTimer("teardown_cluster: done."):
         while A:
             provider.terminate_nodes(A)
@@ -581,7 +599,9 @@ def get_or_create_head_node(config: Dict[str, Any],
 
     cli_logger.newline()
     # TODO(ekl) this logic is duplicated in node_launcher.py (keep in sync)
-    head_node_config = copy.deepcopy(config["head_node"])
+    head_node_config = copy.deepcopy(config.get("head_node", {}))
+    # The above `head_node` field is deprecated in favor of per-node-type
+    # node_configs. We allow it for backwards-compatibility.
     head_node_resources = None
     if "head_node_type" in config:
         head_node_type = config["head_node_type"]
@@ -594,8 +614,10 @@ def get_or_create_head_node(config: Dict[str, Any],
         head_node_resources = head_config.get("resources")
 
     launch_hash = hash_launch_conf(head_node_config, config["auth"])
+    launching_new_head = False
     if head_node is None or provider.node_tags(head_node).get(
             TAG_RAY_LAUNCH_CONFIG) != launch_hash:
+        launching_new_head = True
         with cli_logger.group("Acquiring an up-to-date head node"):
             global_event_system.execute_callback(
                 CreateClusterEvent.acquiring_new_head_node)
@@ -625,9 +647,8 @@ def get_or_create_head_node(config: Dict[str, Any],
             with cli_logger.group("Fetching the new head node"):
                 while True:
                     if time.time() - start > 50:
-                        cli_logger.abort(
-                            "Head node fetch timed out.")  # todo: msg
-                        raise RuntimeError("Failed to create head node.")
+                        cli_logger.abort("Head node fetch timed out. "
+                                         "Failed to create head node.")
                     nodes = provider.non_terminated_nodes(head_node_tags)
                     if len(nodes) == 1:
                         head_node = nodes[0]
@@ -665,12 +686,25 @@ def get_or_create_head_node(config: Dict[str, Any],
             else:
                 setup_commands = []
             ray_start_commands = config["head_start_ray_commands"]
-        elif no_restart:
+        # If user passed in --no-restart and we're not launching a new head,
+        # omit start commands.
+        elif no_restart and not launching_new_head:
             setup_commands = config["head_setup_commands"]
             ray_start_commands = []
         else:
             setup_commands = config["head_setup_commands"]
             ray_start_commands = config["head_start_ray_commands"]
+
+        # If restarting Ray on a manually-managed on-prem cluster,
+        # we need to upload the local cluster state file to the head node.
+        # If we're not restarting the cluster (empty ray start cmds), don't
+        # sync to avoid breaking the currently running on-prem cluster
+        # autoscaler state.
+        restarting_ray = len(ray_start_commands) > 0
+        if restarting_ray and is_local_manual_node_provider(
+                config["provider"]):
+            # Add cluster state file to file mounts.
+            config = sync_state(config)
 
         if not no_restart:
             warn_about_bad_start_command(ray_start_commands,

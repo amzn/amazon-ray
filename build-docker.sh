@@ -7,7 +7,7 @@ set -x
 
 GPU=""
 BASE_IMAGE="ubuntu:focal"
-WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-1.3.0-cp37-cp37m-manylinux2014_x86_64.whl"
+WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-1.4.0-cp37-cp37m-manylinux2014_x86_64.whl"
 PYTHON_VERSION="3.7.7"
 
 
@@ -17,7 +17,7 @@ key="$1"
 case $key in
     --gpu)
     GPU="-gpu"
-    BASE_IMAGE="nvidia/cuda:11.0-cudnn8-runtime-ubuntu18.04"
+    BASE_IMAGE="nvidia/cuda:11.0-cudnn8-devel-ubuntu18.04"
     ;;
     --no-cache-build)
     NO_CACHE="--no-cache"

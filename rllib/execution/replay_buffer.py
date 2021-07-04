@@ -239,6 +239,10 @@ class PrioritizedReplayBuffer(ReplayBuffer):
           transitions at the sampled idxes denoted by
           variable `idxes`.
         """
+        # Making sure we don't pass in e.g. a torch tensor.
+        assert isinstance(idxes, (list, np.ndarray)), \
+            "ERROR: `idxes` is not a list or np.ndarray, but " \
+            "{}!".format(type(idxes).__name__)
         assert len(idxes) == len(priorities)
         for idx, priority in zip(idxes, priorities):
             assert priority > 0
@@ -414,7 +418,6 @@ class LocalReplayBuffer(ParallelIteratorWorker):
 
         if self.num_added < self.replay_starts:
             return None
-
         with self.replay_timer:
             # Lockstep mode: Sample from all policies at the same time an
             # equal amount of steps.
