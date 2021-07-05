@@ -3,8 +3,6 @@ import ray
 
 ray.experimental.internal_kv.redis = False
 
-ray.experimental.internal_kv.redis = False
-
 
 def test_parse_resource_demands():
     resource_load_by_shape = ray.gcs_utils.ResourceLoad(resource_demands=[

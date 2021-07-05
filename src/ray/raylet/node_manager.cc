@@ -442,18 +442,6 @@ ray::Status NodeManager::RegisterGcs() {
         "NodeManager.deadline_timer.print_event_loop_stats");
   }
 
-  /// If periodic asio stats print is enabled, it will print it.
-  const auto asio_stats_print_interval_ms =
-      RayConfig::instance().asio_stats_print_interval_ms();
-  if (asio_stats_print_interval_ms != -1 &&
-      RayConfig::instance().asio_event_loop_stats_collection_enabled()) {
-    periodical_runner_.RunFnPeriodically(
-        [this] {
-          RAY_LOG(INFO) << "Event loop stats:\n\n" << io_service_.StatsString() << "\n\n";
-        },
-        asio_stats_print_interval_ms);
-  }
-
   return ray::Status::OK();
 }
 
