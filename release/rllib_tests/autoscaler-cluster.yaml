@@ -44,7 +44,7 @@ setup_commands:
     - pip install terminado
     - pip install torch==1.6 torchvision
     - pip install boto3==1.4.8 cython==0.29.0
-    - "pip install https://s3-us-west-2.amazonaws.com/ray-wheels/releases/1.1.0/f591f6c1c8fa14af6df2adfdcf3255c59dff12b1/ray-1.1.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl"
+    - "pip install http://d168575n8y1h5x.cloudfront.net/releases/1.1.0/f591f6c1c8fa14af6df2adfdcf3255c59dff12b1/ray-1.1.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl"
     - git clone https://github.com/ray-project/ray.git ray-cp
     - pip install -r ./ray-cp/release/rllib_tests/regression_tests/requirements.txt
 

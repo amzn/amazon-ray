@@ -2,15 +2,18 @@ import os
 import sys
 import copy
 import json
+import jsonschema
 import time
 import logging
 import asyncio
+import ipaddress
 import subprocess
 import collections
 
 import numpy as np
 import aiohttp.web
 import ray
+import pprint
 import psutil
 import pytest
 import redis
@@ -154,6 +157,24 @@ def test_basic(ray_start_with_dashboard):
     key = f"{dashboard_consts.DASHBOARD_AGENT_PORT_PREFIX}{node_id}"
     agent_ports = client.get(key)
     assert agent_ports is not None
+
+
+@pytest.mark.parametrize(
+    "ray_start_with_dashboard", [{
+        "dashboard_host": "127.0.0.1"
+    }, {
+        "dashboard_host": "0.0.0.0"
+    }, {
+        "dashboard_host": "::"
+    }],
+    indirect=True)
+def test_dashboard_address(ray_start_with_dashboard):
+    webui_url = ray_start_with_dashboard["webui_url"]
+    webui_ip = webui_url.split(":")[0]
+    assert not ipaddress.ip_address(webui_ip).is_unspecified
+    assert webui_ip in [
+        "127.0.0.1", ray_start_with_dashboard["node_ip_address"]
+    ]
 
 
 def test_nodes_update(enable_test_module, ray_start_with_dashboard):
@@ -497,6 +518,63 @@ def test_get_cluster_status(ray_start_with_dashboard):
     assert "loadMetricsReport" in response.json()["data"]["clusterStatus"]
 
 
+def test_snapshot(ray_start_with_dashboard):
+    driver_template = """
+import ray
+
+ray.init(address="{address}", namespace="my_namespace")
+
+@ray.remote
+class Pinger:
+    def ping(self):
+        return "pong"
+
+a = Pinger.options(lifetime={lifetime}, name={name}).remote()
+ray.get(a.ping.remote())
+    """
+
+    detached_driver = driver_template.format(
+        address=ray_start_with_dashboard["redis_address"],
+        lifetime="'detached'",
+        name="'abc'")
+    named_driver = driver_template.format(
+        address=ray_start_with_dashboard["redis_address"],
+        lifetime="None",
+        name="'xyz'")
+    unnamed_driver = driver_template.format(
+        address=ray_start_with_dashboard["redis_address"],
+        lifetime="None",
+        name="None")
+
+    run_string_as_driver(detached_driver)
+    run_string_as_driver(named_driver)
+    run_string_as_driver(unnamed_driver)
+
+    webui_url = ray_start_with_dashboard["webui_url"]
+    webui_url = format_web_url(webui_url)
+    response = requests.get(f"{webui_url}/api/snapshot")
+    response.raise_for_status()
+    data = response.json()
+    schema_path = os.path.join(
+        os.path.dirname(dashboard.__file__),
+        "modules/snapshot/snapshot_schema.json")
+    pprint.pprint(data)
+    jsonschema.validate(instance=data, schema=json.load(open(schema_path)))
+
+    assert len(data["data"]["snapshot"]["actors"]) == 3
+    assert len(data["data"]["snapshot"]["jobs"]) == 4
+
+    for actor_id, entry in data["data"]["snapshot"]["actors"].items():
+        assert entry["jobId"] in data["data"]["snapshot"]["jobs"]
+        assert entry["actorClass"] == "Pinger"
+        assert entry["startTime"] >= 0
+        if entry["isDetached"]:
+            assert entry["endTime"] == 0, entry
+        else:
+            assert entry["endTime"] > 0, entry
+        assert "runtimeEnv" in entry
+
+
 def test_immutable_types():
     d = {str(i): i for i in range(1000)}
     d["list"] = list(range(1000))
@@ -632,7 +710,7 @@ def test_dashboard_port_conflict(ray_start_with_dashboard):
     p = subprocess.Popen(dashboard_cmd)
     p.wait(5)
 
-    dashboard_cmd.append(f"--port-retries=10")
+    dashboard_cmd.append("--port-retries=10")
     subprocess.Popen(dashboard_cmd)
 
     timeout_seconds = 10

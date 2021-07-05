@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
   const ray::stats::TagsType global_tags = {
       {ray::stats::ComponentKey, "gcs_server"},
-      {ray::stats::VersionKey, "1.3.0"},
+      {ray::stats::VersionKey, "1.4.0"},
       {ray::stats::NodeAddressKey, node_ip_address}};
   ray::stats::Init(global_tags, metrics_agent_port);
 
@@ -101,6 +101,10 @@ int main(int argc, char *argv[]) {
   gcs_server_config.redis_password = redis_password;
   gcs_server_config.retry_redis = retry_redis;
   gcs_server_config.node_ip_address = node_ip_address;
+  gcs_server_config.pull_based_resource_reporting =
+      RayConfig::instance().pull_based_resource_reporting();
+  gcs_server_config.grpc_based_resource_broadcast =
+      RayConfig::instance().grpc_based_resource_broadcast();
   ray::gcs::GcsServer gcs_server(gcs_server_config, main_service);
 
   // Destroy the GCS server on a SIGTERM. The pointer to main_service is

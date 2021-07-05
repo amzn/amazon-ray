@@ -10,7 +10,8 @@
 
 # Currently we have the following categories:
 
-# a) Learning tests/regression, tagged: "learning_tests"
+# a) Learning tests/regression, tagged:
+#    "learning_tests_[tf|torch]" AND "learning_tests_[cartpole|pendulum]"
 # b) Quick agent compilation/tune-train tests, tagged "quick_train"
 # c-e) Utils, Models, Agents, tagged "utils", "models", and "agents_dir".
 # f) Tests directory (everything in rllib/tests/...), tagged: "tests_dir"
@@ -80,6 +81,31 @@ py_test(
     srcs = ["tests/run_regression_tests.py"],
     data = ["tuned_examples/a3c/cartpole-a3c.yaml"],
     args = ["--yaml-dir=tuned_examples/a3c", "--framework=torch"]
+)
+
+# APEX-DQN
+py_test(
+    name = "run_regression_tests_cartpole_apex_tf",
+    main = "tests/run_regression_tests.py",
+    tags = ["learning_tests_tf", "learning_tests_cartpole"],
+    size = "large",
+    srcs = ["tests/run_regression_tests.py"],
+    data = [
+        "tuned_examples/dqn/cartpole-apex.yaml",
+    ],
+    args = ["--yaml-dir=tuned_examples/dqn"]
+)
+
+py_test(
+    name = "run_regression_tests_cartpole_apex_torch",
+    main = "tests/run_regression_tests.py",
+    tags = ["learning_tests_torch", "learning_tests_cartpole"],
+    size = "large",
+    srcs = ["tests/run_regression_tests.py"],
+    data = [
+        "tuned_examples/dqn/cartpole-apex.yaml",
+    ],
+    args = ["--yaml-dir=tuned_examples/dqn", "--framework=torch"]
 )
 
 # APPO
@@ -162,7 +188,7 @@ py_test(
     args = ["--yaml-dir=tuned_examples/ppo", "--framework=torch"]
 )
 
-# DQN/R2D2
+# DQN
 py_test(
     name = "run_regression_tests_cartpole_dqn_tf",
     main = "tests/run_regression_tests.py",
@@ -268,7 +294,7 @@ py_test(
 #    size = "large",
 #    srcs = ["tests/run_regression_tests.py"],
 #    data = ["tuned_examples/mbmpo/pendulum-mbmpo.yaml"],
-#    args = ["--torch", "--yaml-dir=tuned_examples/mbmpo"]
+#    args = ["--framework=torch", "--yaml-dir=tuned_examples/mbmpo"]
 #)
 
 # PG
@@ -532,6 +558,12 @@ py_test(
     srcs = ["agents/dqn/tests/test_dqn.py"]
 )
 py_test(
+    name = "test_r2d2",
+    tags = ["agents_dir"],
+    size = "large",
+    srcs = ["agents/dqn/tests/test_r2d2.py"]
+)
+py_test(
     name = "test_simple_q",
     tags = ["agents_dir"],
     size = "medium",
@@ -624,7 +656,7 @@ py_test(
 # PPO: DDPPO
 py_test(
     name = "test_ddppo",
-    tags = ["agents_dir"],
+    tags = ["agents_dir", "flaky"],
     size = "small",
     srcs = ["agents/ppo/tests/test_ddppo.py"]
 )
@@ -1170,7 +1202,7 @@ py_test(
 
 py_test(
     name = "test_distributions",
-    tags = ["models"],
+    tags = ["models", "flaky"],
     size = "medium",
     srcs = ["models/tests/test_distributions.py"]
 )
@@ -1178,7 +1210,7 @@ py_test(
 py_test(
     name = "test_models",
     tags = ["models"],
-    size = "small",
+    size = "medium",
     srcs = ["models/tests/test_models.py"]
 )
 
@@ -1195,13 +1227,13 @@ py_test(
 #
 # Tag: evaluation
 # --------------------------------------------------------------------
-# mysteriously times out on travis.
-#py_test(
-#    name = "evaluation/tests/test_trajectory_view_api",
-#    tags = ["evaluation"],
-#    size = "medium",
-#    srcs = ["evaluation/tests/test_trajectory_view_api.py"]
-#)
+
+py_test(
+    name = "evaluation/tests/test_evaluation",
+    tags = ["evaluation"],
+    size = "medium",
+    srcs = ["evaluation/tests/test_evaluation.py"]
+)
 
 py_test(
     name = "evaluation/tests/test_rollout_worker",
@@ -1209,6 +1241,14 @@ py_test(
     size = "medium",
     srcs = ["evaluation/tests/test_rollout_worker.py"]
 )
+
+# mysteriously times out on travis.
+#py_test(
+#    name = "evaluation/tests/test_trajectory_view_api",
+#    tags = ["evaluation"],
+#    size = "medium",
+#    srcs = ["evaluation/tests/test_trajectory_view_api.py"]
+#)
 
 
 # --------------------------------------------------------------------
@@ -1277,7 +1317,7 @@ py_test(
 py_test(
     name = "test_parameter_noise",
     tags = ["utils"],
-    size = "small",
+    size = "medium",
     srcs = ["utils/exploration/tests/test_parameter_noise.py"]
 )
 
@@ -1330,10 +1370,30 @@ py_test(
 )
 
 py_test(
-    name = "tests/test_checkpoint_restore",
+    name = "tests/test_checkpoint_restore_pg",
+    main = "tests/test_checkpoint_restore.py",
     tags = ["tests_dir", "tests_dir_C"],
-    size = "enormous",
-    srcs = ["tests/test_checkpoint_restore.py"]
+    size = "large",
+    srcs = ["tests/test_checkpoint_restore.py"],
+    args = ["TestCheckpointRestorePG"]
+)
+
+py_test(
+    name = "tests/test_checkpoint_restore_off_policy",
+    main = "tests/test_checkpoint_restore.py",
+    tags = ["tests_dir", "tests_dir_C"],
+    size = "large",
+    srcs = ["tests/test_checkpoint_restore.py"],
+    args = ["TestCheckpointRestoreOffPolicy"]
+)
+
+py_test(
+    name = "tests/test_checkpoint_restore_evolution_algos",
+    main = "tests/test_checkpoint_restore.py",
+    tags = ["tests_dir", "tests_dir_C"],
+    size = "large",
+    srcs = ["tests/test_checkpoint_restore.py"],
+    args = ["TestCheckpointRestoreEvolutionAlgos"]
 )
 
 py_test(
@@ -1374,13 +1434,6 @@ py_test(
     tags = ["tests_dir", "tests_dir_E"],
     size = "medium",
     srcs = ["tests/test_env_with_subprocess.py"]
-)
-
-py_test(
-    name = "tests/test_evaluators",
-    tags = ["tests_dir", "tests_dir_E"],
-    size = "medium",
-    srcs = ["tests/test_evaluators.py"]
 )
 
 py_test(
@@ -1435,7 +1488,7 @@ py_test(
 py_test(
     name = "tests/test_io",
     tags = ["tests_dir", "tests_dir_I"],
-    size = "medium",
+    size = "large",
     srcs = ["tests/test_io.py"]
 )
 
@@ -1479,7 +1532,7 @@ py_test(
     name = "tests/test_nested_observation_spaces",
     main = "tests/test_nested_observation_spaces.py",
     tags = ["tests_dir", "tests_dir_N"],
-    size = "small",
+    size = "medium",
     srcs = ["tests/test_nested_observation_spaces.py"]
 )
 
@@ -1506,13 +1559,43 @@ py_test(
 
 # Test train/rollout scripts (w/o confirming rollout performance).
 py_test(
-    name = "test_rollout_no_learning",
+    name = "test_rollout_no_learning1",
     main = "tests/test_rollout.py",
     tags = ["tests_dir", "tests_dir_R"],
     size = "large",
     data = ["train.py", "rollout.py"],
     srcs = ["tests/test_rollout.py"],
-    args = ["TestRolloutSimple"]
+    args = ["TestRolloutSimple1"]
+)
+
+py_test(
+    name = "test_rollout_no_learning2",
+    main = "tests/test_rollout.py",
+    tags = ["tests_dir", "tests_dir_R"],
+    size = "large",
+    data = ["train.py", "rollout.py"],
+    srcs = ["tests/test_rollout.py"],
+    args = ["TestRolloutSimple2"]
+)
+
+py_test(
+    name = "test_rollout_no_learning3",
+    main = "tests/test_rollout.py",
+    tags = ["tests_dir", "tests_dir_R"],
+    size = "large",
+    data = ["train.py", "rollout.py"],
+    srcs = ["tests/test_rollout.py"],
+    args = ["TestRolloutSimple3"]
+)
+
+py_test(
+    name = "test_rollout_no_learning4",
+    main = "tests/test_rollout.py",
+    tags = ["tests_dir", "tests_dir_R"],
+    size = "large",
+    data = ["train.py", "rollout.py"],
+    srcs = ["tests/test_rollout.py"],
+    args = ["TestRolloutSimple4"]
 )
 
 # Test train/rollout scripts (and confirm `rllib rollout` performance is same
@@ -1603,7 +1686,7 @@ py_test(
     tags = ["examples", "examples_A"],
     size = "medium",
     srcs = ["examples/attention_net.py"],
-    args = ["--as-test", "--stop-reward=80"]
+    args = ["--as-test", "--stop-reward=20"]
 )
 
 py_test(
@@ -1612,7 +1695,7 @@ py_test(
     tags = ["examples", "examples_A"],
     size = "medium",
     srcs = ["examples/attention_net.py"],
-    args = ["--as-test", "--stop-reward=80", "--framework torch"]
+    args = ["--as-test", "--stop-reward=20", "--framework torch"]
 )
 
 py_test(
@@ -1630,7 +1713,7 @@ py_test(
     tags = ["examples", "examples_A"],
     size = "medium",
     srcs = ["examples/autoregressive_action_dist.py"],
-    args = ["--as-test", "--torch", "--stop-reward=150", "--num-cpus=4"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=150", "--num-cpus=4"]
 )
 
 py_test(
@@ -1648,7 +1731,7 @@ py_test(
     tags = ["examples", "examples_B"],
     size = "medium",
     srcs = ["examples/batch_norm_model.py"],
-    args = ["--as-test", "--torch", "--run=PPO", "--stop-reward=80"]
+    args = ["--as-test", "--framework=torch", "--run=PPO", "--stop-reward=80"]
 )
 
 py_test(
@@ -1666,14 +1749,14 @@ py_test(
     tags = ["examples", "examples_B"],
     size = "large",  # DQN learns much slower with BatchNorm.
     srcs = ["examples/batch_norm_model.py"],
-    args = ["--as-test", "--torch", "--run=DQN", "--stop-reward=70"]
+    args = ["--as-test", "--framework=torch", "--run=DQN", "--stop-reward=70"]
 )
 
 py_test(
     name = "examples/batch_norm_model_ddpg_tf",
     main = "examples/batch_norm_model.py",
     tags = ["examples", "examples_B"],
-    size = "small",
+    size = "medium",
     srcs = ["examples/batch_norm_model.py"],
     args = ["--run=DDPG", "--stop-iters=1"]
 )
@@ -1684,14 +1767,14 @@ py_test(
     tags = ["examples", "examples_B"],
     size = "medium",
     srcs = ["examples/batch_norm_model.py"],
-    args = ["--torch", "--run=DDPG", "--stop-iters=1"]
+    args = ["--framework=torch", "--run=DDPG", "--stop-iters=1"]
 )
 
 py_test(
     name = "examples/cartpole_lstm_impala_tf",
     main = "examples/cartpole_lstm.py",
     tags = ["examples", "examples_C"],
-    size = "large",
+    size = "medium",
     srcs = ["examples/cartpole_lstm.py"],
     args = ["--as-test", "--run=IMPALA", "--stop-reward=40", "--num-cpus=4"]
 )
@@ -1700,7 +1783,7 @@ py_test(
     name = "examples/cartpole_lstm_impala_torch",
     main = "examples/cartpole_lstm.py",
     tags = ["examples", "examples_C"],
-    size = "large",
+    size = "medium",
     srcs = ["examples/cartpole_lstm.py"],
     args = ["--as-test", "--framework=torch", "--run=IMPALA", "--stop-reward=40", "--num-cpus=4"]
 )
@@ -1709,7 +1792,7 @@ py_test(
     name = "examples/cartpole_lstm_ppo_tf",
     main = "examples/cartpole_lstm.py",
     tags = ["examples", "examples_C"],
-    size = "large",
+    size = "medium",
     srcs = ["examples/cartpole_lstm.py"],
     args = ["--as-test", "--framework=tf", "--run=PPO", "--stop-reward=40", "--num-cpus=4"]
 )
@@ -1727,7 +1810,7 @@ py_test(
     name = "examples/cartpole_lstm_ppo_torch",
     main = "examples/cartpole_lstm.py",
     tags = ["examples", "examples_C"],
-    size = "large",
+    size = "medium",
     srcs = ["examples/cartpole_lstm.py"],
     args = ["--as-test", "--framework=torch", "--run=PPO", "--stop-reward=40", "--num-cpus=4"]
 )
@@ -1736,7 +1819,7 @@ py_test(
     name = "examples/cartpole_lstm_ppo_tf_with_prev_a_and_r",
     main = "examples/cartpole_lstm.py",
     tags = ["examples", "examples_C"],
-    size = "large",
+    size = "medium",
     srcs = ["examples/cartpole_lstm.py"],
     args = ["--as-test", "--run=PPO", "--stop-reward=40", "--use-prev-action",  "--use-prev-reward", "--num-cpus=4"]
 )
@@ -1756,7 +1839,7 @@ py_test(
     tags = ["examples", "examples_C"],
     size = "large",
     srcs = ["examples/centralized_critic.py"],
-    args = ["--as-test", "--torch", "--stop-reward=7.2"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=7.2"]
 )
 
 py_test(
@@ -1774,7 +1857,7 @@ py_test(
     tags = ["examples", "examples_C"],
     size = "medium",
     srcs = ["examples/centralized_critic_2.py"],
-    args = ["--as-test", "--torch", "--stop-reward=6.0"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=6.0"]
 )
 
 py_test(
@@ -1811,6 +1894,15 @@ py_test(
 )
 
 py_test(
+    name = "examples/curriculum_learning",
+    main = "examples/curriculum_learning.py",
+    tags = ["examples", "examples_C"],
+    size = "medium",
+    srcs = ["examples/curriculum_learning.py"],
+    args = ["--as-test", "--stop-reward=800.0"]
+)
+
+py_test(
     name = "examples/custom_env_tf",
     main = "examples/custom_env.py",
     tags = ["examples", "examples_C"],
@@ -1822,10 +1914,10 @@ py_test(
 py_test(
     name = "examples/custom_env_torch",
     main = "examples/custom_env.py",
-    tags = ["examples", "examples_C"],
+    tags = ["examples", "examples_C", "flaky"],
     size = "medium",
     srcs = ["examples/custom_env.py"],
-    args = ["--as-test", "--torch"]
+    args = ["--as-test", "--framework=torch"]
 )
 
 py_test(
@@ -1843,25 +1935,34 @@ py_test(
     tags = ["examples", "examples_C"],
     size = "medium",
     srcs = ["examples/custom_eval.py"],
-    args = ["--num-cpus=4", "--as-test", "--torch"]
+    args = ["--num-cpus=4", "--as-test", "--framework=torch"]
+)
+
+py_test(
+    name = "examples/custom_experiment",
+    main = "examples/custom_experiment.py",
+    tags = ["examples", "examples_C"],
+    size = "medium",
+    srcs = ["examples/custom_experiment.py"],
+    args = ["--train-iterations=10"]
 )
 
 py_test(
     name = "examples/custom_fast_model_tf",
     main = "examples/custom_fast_model.py",
     tags = ["examples", "examples_C"],
-    size = "small",
+    size = "medium",
     srcs = ["examples/custom_fast_model.py"],
-    args = ["--stop-iters=1", "--num-cpus=4"]
+    args = ["--stop-iters=1"]
 )
 
 py_test(
     name = "examples/custom_fast_model_torch",
     main = "examples/custom_fast_model.py",
     tags = ["examples", "examples_C"],
-    size = "small",
+    size = "medium",
     srcs = ["examples/custom_fast_model.py"],
-    args = ["--torch", "--stop-iters=1", "--num-cpus=4"]
+    args = ["--stop-iters=1", "--framework=torch"]
 )
 
 py_test(
@@ -1910,7 +2011,7 @@ py_test(
     # Include the json data file.
     data = ["tests/data/cartpole/small.json"],
     srcs = ["examples/custom_loss.py"],
-    args = ["--torch", "--stop-iters=2", "--input-files=tests/data/cartpole"]
+    args = ["--framework=torch", "--stop-iters=2", "--input-files=tests/data/cartpole"]
 )
 
 py_test(
@@ -1981,7 +2082,7 @@ py_test(
     tags = ["examples", "examples_C"],
     size = "medium",
     srcs = ["examples/custom_rnn_model.py"],
-    args = ["--as-test", "--torch", "--run=PPO", "--stop-reward=40", "--env=RepeatAfterMeEnv", "--num-cpus=4"]
+    args = ["--as-test", "--framework=torch", "--run=PPO", "--stop-reward=40", "--env=RepeatAfterMeEnv", "--num-cpus=4"]
 )
 
 py_test(
@@ -1990,7 +2091,7 @@ py_test(
     tags = ["examples", "examples_C"],
     size = "medium",
     srcs = ["examples/custom_rnn_model.py"],
-    args = ["--as-test", "--torch", "--run=PPO", "--stop-reward=10", "--stop-timesteps=300000", "--env=RepeatInitialObsEnv", "--num-cpus=4"]
+    args = ["--as-test", "--framework=torch", "--run=PPO", "--stop-reward=10", "--stop-timesteps=300000", "--env=RepeatInitialObsEnv", "--num-cpus=4"]
 )
 
 py_test(
@@ -2007,6 +2108,33 @@ py_test(
     size = "small",
     srcs = ["examples/custom_torch_policy.py"],
     args = ["--stop-iters=2", "--num-cpus=4"]
+)
+
+py_test(
+    name = "examples/deterministic_training_tf",
+    main = "examples/deterministic_training.py",
+    tags = ["examples", "examples_D"],
+    size = "medium",
+    srcs = ["examples/deterministic_training.py"],
+    args = ["--as-test", "--stop-iters=1", "--framework=tf"]
+)
+
+py_test(
+    name = "examples/deterministic_training_tf2",
+    main = "examples/deterministic_training.py",
+    tags = ["examples", "examples_D"],
+    size = "medium",
+    srcs = ["examples/deterministic_training.py"],
+    args = ["--as-test", "--stop-iters=1", "--framework=tf2"]
+)
+
+py_test(
+    name = "examples/deterministic_training_torch",
+    main = "examples/deterministic_training.py",
+    tags = ["examples", "examples_D"],
+    size = "medium",
+    srcs = ["examples/deterministic_training.py"],
+    args = ["--as-test", "--stop-iters=1", "--framework=torch"]
 )
 
 py_test(
@@ -2032,7 +2160,7 @@ py_test(
     tags = ["examples", "examples_H"],
     size = "medium",
     srcs = ["examples/hierarchical_training.py"],
-    args = ["--torch", "--stop-reward=0.0"]
+    args = ["--framework=torch", "--stop-reward=0.0"]
 )
 
 # Do not run this test (MobileNetV2 is gigantic and takes forever for 1 iter).
@@ -2077,7 +2205,7 @@ py_test(
     tags = ["examples", "examples_M"],
     size = "small",
     srcs = ["examples/multi_agent_custom_policy.py"],
-    args = ["--as-test", "--torch", "--stop-reward=80"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=80"]
 )
 
 py_test(
@@ -2095,7 +2223,7 @@ py_test(
     tags = ["examples", "examples_M"],
     size = "medium",
     srcs = ["examples/multi_agent_two_trainers.py"],
-    args = ["--as-test", "--torch", "--stop-reward=70"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=70"]
 )
 
 # Taking out this test for now: Mixed torch- and tf- policies within the same
@@ -2124,7 +2252,16 @@ py_test(
     tags = ["examples", "examples_N"],
     size = "medium",
     srcs = ["examples/nested_action_spaces.py"],
-    args = ["--as-test", "--torch", "--stop-reward=-600", "--run=PPO"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=-600", "--run=PPO"]
+)
+
+py_test(
+    name = "examples/parallel_evaluation_and_training_tf",
+    main = "examples/parallel_evaluation_and_training.py",
+    tags = ["examples", "examples_P"],
+    size = "medium",
+    srcs = ["examples/parallel_evaluation_and_training.py"],
+    args = ["--as-test", "--stop-reward=50.0", "--num-cpus=6"]
 )
 
 py_test(
@@ -2149,9 +2286,9 @@ py_test(
     name = "examples/parametric_actions_cartpole_pg_torch",
     main = "examples/parametric_actions_cartpole.py",
     tags = ["examples", "examples_P"],
-    size = "small",
+    size = "medium",
     srcs = ["examples/parametric_actions_cartpole.py"],
-    args = ["--as-test", "--torch", "--stop-reward=60.0", "--run=PG"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=60.0", "--run=PG"]
 )
 
 py_test(
@@ -2160,7 +2297,24 @@ py_test(
     tags = ["examples", "examples_P"],
     size = "medium",
     srcs = ["examples/parametric_actions_cartpole.py"],
-    args = ["--as-test", "--torch", "--stop-reward=60.0", "--run=DQN"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=60.0", "--run=DQN"]
+)
+
+py_test(
+    name = "examples/partial_gpus",
+    main = "examples/partial_gpus.py",
+    tags = ["examples", "examples_P"],
+    size = "medium",
+    srcs = ["examples/partial_gpus.py"],
+    args = ["--as-test", "--stop-reward=40.0", "--num-gpus=0", "--num-workers=0"]
+)
+
+py_test(
+    name = "examples/restore_1_of_n_agents_from_checkpoint",
+    tags = ["examples", "examples_R"],
+    size = "medium",
+    srcs = ["examples/restore_1_of_n_agents_from_checkpoint.py"],
+    args = ["--pre-training-iters=1", "--stop-iters=1", "--num-cpus=4"]
 )
 
 py_test(
@@ -2186,7 +2340,7 @@ py_test(
     tags = ["examples", "examples_R"],
     size = "medium",
     srcs = ["examples/rock_paper_scissors_multiagent.py"],
-    args = ["--as-test", "--torch"],
+    args = ["--as-test", "--framework=torch"],
 )
 
 py_test(
@@ -2258,7 +2412,7 @@ py_test(
     tags = ["examples", "examples_T"],
     size = "medium",
     srcs = ["examples/two_step_game.py"],
-    args = ["--as-test", "--torch", "--stop-reward=7", "--run=PG"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=7", "--run=PG"]
 )
 
 py_test(
@@ -2267,7 +2421,7 @@ py_test(
     tags = ["examples", "examples_T"],
     size = "medium",
     srcs = ["examples/two_step_game.py"],
-    args = ["--as-test", "--torch", "--stop-reward=7", "--run=QMIX"]
+    args = ["--as-test", "--framework=torch", "--stop-reward=7", "--run=QMIX"]
 )
 
 py_test(
