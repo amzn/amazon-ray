@@ -1056,7 +1056,7 @@ def get_master_wheel_url(
         sys_platform=sys_platform,
         ray_version=ray_version,
         py_version=py_version)
-    return (f"https://s3-us-west-2.amazonaws.com/ray-wheels/master/"
+    return (f"http://d168575n8y1h5x.cloudfront.net/main/"
             f"{ray_commit}/{filename}")
 
 
@@ -1071,8 +1071,8 @@ def get_release_wheel_url(
         sys_platform=sys_platform,
         ray_version=ray_version,
         py_version=py_version)
-    return (f"https://ray-wheels.s3-us-west-2.amazonaws.com/releases/"
+    return (f"http://d168575n8y1h5x.cloudfront.net/staging/"
             f"{ray_version}/{ray_commit}/{filename}")
-    # e.g. https://ray-wheels.s3-us-west-2.amazonaws.com/releases/1.4.0rc1/e7c7
+    # e.g. http://d168575n8y1h5x.cloudfront.net/staging/1.4.0rc1/e7c7
     # f6371a69eb727fa469e4cd6f4fbefd143b4c/ray-1.4.0rc1-cp36-cp36m-manylinux201
     # 4_x86_64.whl

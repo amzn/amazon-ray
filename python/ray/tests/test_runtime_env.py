@@ -664,7 +664,7 @@ def test_get_wheel_filename():
         for py_version in ["36", "37", "38"]:
             filename = get_wheel_filename(sys_platform, ray_version,
                                           py_version)
-            prefix = "https://s3-us-west-2.amazonaws.com/ray-wheels/latest/"
+            prefix = "http://d168575n8y1h5x.cloudfront.net/latest/"
             url = f"{prefix}{filename}"
             assert requests.head(url).status_code == 200
 
