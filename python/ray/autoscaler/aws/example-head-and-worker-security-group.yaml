@@ -20,12 +20,19 @@ auth:
 # To enable external SSH connectivity, you should also ensure that your VPC
 # is configured to assign public IPv4 addresses to every EC2 instance
 # assigned to it.
-head_node:
-    SecurityGroupIds:
-        - sg-1234abcd # Replace with an actual security group id.
+available_node_types:
+    ray.head.default:
+        node_config:
+            SecurityGroupIds:
+                - sg-1234abcd # Replace with an actual security group id.
+        resources: {}
 
-worker_nodes:
-    SecurityGroupIds:
-        - sg-1234abcd # Replace with an actual security group id.
+    ray.worker.default:
+        node_config:
+            SecurityGroupIds:
+                - sg-1234abcd # Replace with an actual security group id.
+        resources: {}
+
+head_node_type: ray.head.default
 
 

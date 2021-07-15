@@ -10,21 +10,27 @@ provider:
 auth:
     ssh_user: ubuntu
 
-# If required, head and worker nodes can exist on subnets in different VPCs and
-# communicate via VPC peering.
+available_node_types:
+    ray.head.default:
+        node_config:
+            # If required, head and worker nodes can exist on subnets in different VPCs and
+            # communicate via VPC peering.
 
-# VPC peering overview: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-peering.html.
-# Setup VPC peering: https://docs.aws.amazon.com/vpc/latest/peering/create-vpc-peering-connection.html.
-# Configure VPC peering route tables: https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-routing.html.
+            # VPC peering overview: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-peering.html.
+            # Setup VPC peering: https://docs.aws.amazon.com/vpc/latest/peering/create-vpc-peering-connection.html.
+            # Configure VPC peering route tables: https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-routing.html.
 
-# To enable external SSH connectivity, you should also ensure that your VPC
-# is configured to assign public IPv4 addresses to every EC2 instance
-# assigned to it.
-head_node:
-    SubnetIds:
-        - subnet-0000000 # Replace with your actual Head Node Subnet ID.
+            # To enable external SSH connectivity, you should also ensure that your VPC
+            # is configured to assign public IPv4 addresses to every EC2 instance
+            # assigned to it.
+            SubnetIds:
+                - subnet-0000000 # Replace with your actual Head Node Subnet ID.
+        resources: {}
 
-worker_nodes:
-    SubnetIds:
-        - subnet-fffffff # Replace with your actual Worker Node Subnet ID.
+    ray.worker.default:
+        node_config:
+            SubnetIds:
+                - subnet-fffffff # Replace with your actual Worker Node Subnet ID.
+        resources: {}
 
+head_node_type: ray.head.default
