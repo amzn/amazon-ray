@@ -1,9 +1,9 @@
-#include "ray/raylet/scheduling/cluster_task_manager.h"
-
 #include <google/protobuf/map.h>
 
+#include <boost/functional/hash.hpp>
 #include <boost/range/join.hpp>
 
+#include "ray/raylet/scheduling/cluster_task_manager.h"
 #include "ray/stats/stats.h"
 #include "ray/util/logging.h"
 
@@ -141,6 +141,13 @@ bool ClusterTaskManager::WaitForTaskArgsRequests(Work work) {
 void ClusterTaskManager::DispatchScheduledTasksToWorkers(
     WorkerPoolInterface &worker_pool,
     std::unordered_map<WorkerID, std::shared_ptr<WorkerInterface>> &leased_workers) {
+  using job_id_runtime_env_hash_pair = std::pair<size_t, int>;
+  // TODO(simon): blocked_runtime_env_to_skip is added as a hack to make sure tasks
+  // requiring different runtime env doesn't block each other. We need to find a
+  // long term solution for this, see #17154.
+  std::unordered_set<job_id_runtime_env_hash_pair,
+                     boost::hash<job_id_runtime_env_hash_pair>>
+      blocked_runtime_env_to_skip;
   // Check every task in task_to_dispatch queue to see
   // whether it can be dispatched and ran. This avoids head-of-line
   // blocking where a task which cannot be dispatched because
@@ -155,6 +162,15 @@ void ClusterTaskManager::DispatchScheduledTasksToWorkers(
       const auto &task = std::get<0>(work);
       const auto &spec = task.GetTaskSpecification();
       TaskID task_id = spec.TaskId();
+      const auto runtime_env_worker_key =
+          std::make_pair(spec.JobId().Hash(), spec.GetRuntimeEnvHash());
+
+      // Current task and runtime env combination doesn't have an available worker,
+      // therefore skipping the task.
+      if (blocked_runtime_env_to_skip.count(runtime_env_worker_key) > 0) {
+        work_it++;
+        continue;
+      }
 
       bool args_missing = false;
       bool success = PinTaskArgsIfMemoryAvailable(spec, &args_missing);
@@ -232,11 +248,15 @@ void ClusterTaskManager::DispatchScheduledTasksToWorkers(
           // double-acquiring when the next invocation of this function tries to schedule
           // this task.
           cluster_resource_scheduler_->ReleaseWorkerResources(allocated_instances);
-          // No worker available, we won't be able to schedule any kind of task.
-          // Worker processes spin up pretty quickly, so it's not worth trying to spill
-          // this task.
           ReleaseTaskArgs(task_id);
-          return;
+          // It may be that no worker was available with the correct runtime env or
+          // correct job ID.  However, another task with a different env or job ID
+          // might have a worker available, so continue iterating through the queue.
+          work_it++;
+          // Keep track of runtime env that doesn't have workers available so we
+          // won't call PopWorker for subsequent tasks requiring the same runtime env.
+          blocked_runtime_env_to_skip.insert(runtime_env_worker_key);
+          continue;
         }
 
         RAY_LOG(DEBUG) << "Dispatching task " << task_id << " to worker "
@@ -302,11 +322,6 @@ void ClusterTaskManager::QueueAndScheduleTask(
   ScheduleAndDispatchTasks();
 }
 
-void ClusterTaskManager::ScheduleInfeasibleTasks() {
-  // Do nothing.
-  // TODO(Shanly): This method will be removed once we remove the legacy scheduler.
-}
-
 void ClusterTaskManager::TasksUnblocked(const std::vector<TaskID> &ready_ids) {
   if (ready_ids.empty()) {
     return;
@@ -370,6 +385,7 @@ bool ClusterTaskManager::PinTaskArgsIfMemoryAvailable(const TaskSpecification &s
   for (auto &arg : args) {
     task_arg_bytes += arg->GetSize();
   }
+  RAY_LOG(DEBUG) << "Task " << spec.TaskId() << " has args of size " << task_arg_bytes;
   PinTaskArgs(spec, std::move(args));
   RAY_LOG(DEBUG) << "Size of pinned task args is now " << pinned_task_arguments_bytes_;
   if (max_pinned_task_arguments_bytes_ == 0) {
@@ -561,13 +577,12 @@ void ClusterTaskManager::FillPendingActorInfo(rpc::GetNodeStatsReply *reply) con
   }
 }
 
-void ClusterTaskManager::FillResourceUsage(rpc::ResourcesData &data) {
+void ClusterTaskManager::FillResourceUsage(
+    rpc::ResourcesData &data,
+    const std::shared_ptr<SchedulingResources> &last_reported_resources) {
   if (max_resource_shapes_per_load_report_ == 0) {
     return;
   }
-  // TODO (WangTao): Find a way to check if load changed and combine it with light
-  // heartbeat. Now we just report it every time.
-  data.set_resource_load_changed(true);
   auto resource_loads = data.mutable_resource_load();
   auto resource_load_by_shape =
       data.mutable_resource_load_by_shape()->mutable_resource_demands();
@@ -727,6 +742,19 @@ void ClusterTaskManager::FillResourceUsage(rpc::ResourcesData &data) {
     if (backlog_it != backlog_tracker_.end()) {
       by_shape_entry->set_backlog_size(backlog_it->second);
     }
+  }
+
+  if (RayConfig::instance().enable_light_weight_resource_report()) {
+    // Check whether resources have been changed.
+    std::unordered_map<std::string, double> local_resource_map(
+        data.resource_load().begin(), data.resource_load().end());
+    ResourceSet local_resource(local_resource_map);
+    if (last_reported_resources == nullptr ||
+        !last_reported_resources->GetLoadResources().IsEqual(local_resource)) {
+      data.set_resource_load_changed(true);
+    }
+  } else {
+    data.set_resource_load_changed(true);
   }
 }
 
@@ -1039,7 +1067,6 @@ void ClusterTaskManager::ScheduleAndDispatchTasks() {
 }
 
 void ClusterTaskManager::SpillWaitingTasks() {
-  RAY_LOG(DEBUG) << "Attempting to spill back from waiting task queue";
   // Try to spill waiting tasks to a remote node, prioritizing those at the end
   // of the queue. Waiting tasks are spilled if there are enough remote
   // resources AND (we have no resources available locally OR their
@@ -1095,6 +1122,41 @@ void ClusterTaskManager::SpillWaitingTasks() {
       break;
     }
   }
+}
+
+ResourceSet ClusterTaskManager::CalcNormalTaskResources() const {
+  std::unordered_map<std::string, FixedPoint> total_normal_task_resources;
+  const auto &string_id_map = cluster_resource_scheduler_->GetStringIdMap();
+  for (auto &entry : leased_workers_) {
+    std::shared_ptr<WorkerInterface> worker = entry.second;
+    auto &task_spec = worker->GetAssignedTask().GetTaskSpecification();
+    if (!task_spec.PlacementGroupBundleId().first.IsNil()) {
+      continue;
+    }
+
+    auto task_id = worker->GetAssignedTaskId();
+    auto actor_id = task_id.ActorId();
+    if (!actor_id.IsNil() && task_id == TaskID::ForActorCreationTask(actor_id)) {
+      // This task ID corresponds to an actor creation task.
+      continue;
+    }
+
+    if (auto allocated_instances = worker->GetAllocatedInstances()) {
+      auto resource_request = allocated_instances->ToResourceRequest();
+      for (size_t i = 0; i < resource_request.predefined_resources.size(); i++) {
+        if (resource_request.predefined_resources[i] > 0) {
+          total_normal_task_resources[ResourceEnumToString(PredefinedResources(i))] +=
+              resource_request.predefined_resources[i];
+        }
+      }
+      for (auto &entry : resource_request.custom_resources) {
+        if (entry.second > 0) {
+          total_normal_task_resources[string_id_map.Get(entry.first)] += entry.second;
+        }
+      }
+    }
+  }
+  return total_normal_task_resources;
 }
 
 }  // namespace raylet
