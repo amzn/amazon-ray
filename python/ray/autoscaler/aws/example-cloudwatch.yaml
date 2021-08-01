@@ -4,8 +4,8 @@ max_workers: 2
 
 provider:
     type: aws
-    region: us-east-1
-    availability_zone: us-east-1a
+    region: us-west-2
+    availability_zone: us-west-2a
     cache_stopped_nodes: false
     cloudwatch:
         agent:

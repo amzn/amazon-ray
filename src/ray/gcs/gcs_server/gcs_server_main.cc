@@ -42,7 +42,9 @@ int main(int argc, char *argv[]) {
   const int redis_port = static_cast<int>(FLAGS_redis_port);
   const int gcs_server_port = static_cast<int>(FLAGS_gcs_server_port);
   const int metrics_agent_port = static_cast<int>(FLAGS_metrics_agent_port);
-  const std::string config_list = FLAGS_config_list;
+  std::string config_list;
+  RAY_CHECK(absl::Base64Unescape(FLAGS_config_list, &config_list))
+      << "config_list is not a valid base64-encoded string.";
   const std::string redis_password = FLAGS_redis_password;
   const bool retry_redis = FLAGS_retry_redis;
   const std::string node_ip_address = FLAGS_node_ip_address;
@@ -75,13 +77,12 @@ int main(int argc, char *argv[]) {
         storage->InternalConfigTable().Put(ray::UniqueID::Nil(), config, on_done));
     boost::asio::io_service::work work(service);
     service.run();
-  })
-      .detach();
+  }).detach();
   promise->get_future().get();
 
   const ray::stats::TagsType global_tags = {
       {ray::stats::ComponentKey, "gcs_server"},
-      {ray::stats::VersionKey, "1.4.0"},
+      {ray::stats::VersionKey, "1.5.1"},
       {ray::stats::NodeAddressKey, node_ip_address}};
   ray::stats::Init(global_tags, metrics_agent_port);
 
@@ -105,6 +106,7 @@ int main(int argc, char *argv[]) {
       RayConfig::instance().pull_based_resource_reporting();
   gcs_server_config.grpc_based_resource_broadcast =
       RayConfig::instance().grpc_based_resource_broadcast();
+  gcs_server_config.grpc_pubsub_enabled = RayConfig::instance().gcs_grpc_based_pubsub();
   ray::gcs::GcsServer gcs_server(gcs_server_config, main_service);
 
   // Destroy the GCS server on a SIGTERM. The pointer to main_service is
