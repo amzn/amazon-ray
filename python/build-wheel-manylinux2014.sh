@@ -32,9 +32,9 @@ echo "java_bin path $java_bin"
 java_home=${java_bin%jre/bin/java}
 export JAVA_HOME="$java_home"
 
-/ray/ci/travis/install-bazel.sh
 # Put bazel into the PATH if building Bazel from source
-# export PATH=/root/bazel-3.2.0/output:$PATH:/root/bin
+export PATH=/root/bazel-3.2.0/output:$PATH:/root/bin
+/ray/ci/travis/install-bazel.sh
 
 # If converting down to manylinux2010, the following configuration should
 # be set for bazel
