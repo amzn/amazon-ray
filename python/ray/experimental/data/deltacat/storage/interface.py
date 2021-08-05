@@ -53,7 +53,7 @@ def list_partitions(
         namespace: str,
         table_name: str,
         pagination_key: Optional[str] = None,
-        table_version: Optional[int] = None,
+        table_version: Optional[str] = None,
         *args,
         **kwargs) -> Dict[str, Any]:
     """
@@ -84,7 +84,7 @@ def list_deltas(
         table_name: str,
         partition_values: Optional[List[str]] = None,
         pagination_key: Optional[str] = None,
-        table_version: Optional[int] = None,
+        table_version: Optional[str] = None,
         first_stream_position: Optional[int] = None,
         last_stream_position: Optional[int] = None,
         ascending_order: Optional[bool] = None,
@@ -120,7 +120,7 @@ def latest_delta(
         namespace: str,
         table_name: str,
         partition_values: Optional[List[str]],
-        table_version: Optional[int] = None,
+        table_version: Optional[str] = None,
         *args,
         **kwargs) -> Dict[str, Any]:
     """
@@ -267,7 +267,7 @@ def update_table(
 def update_table_version(
         namespace: str,
         table_name: str,
-        table_version: int,
+        table_version: str,
         lifecycle_state: Optional[LifecycleState] = None,
         schema: Optional[str] = None,
         partition_keys: Optional[List[Dict[str, Any]]] = None,
@@ -290,13 +290,13 @@ def update_table_version(
 def stage_stream(
         namespace: str,
         table_name: str,
-        table_version_number: Optional[int] = None,
+        table_version: Optional[str] = None,
         *args,
         **kwargs) -> Dict[str, Any]:
     """
     Stages a new stream for the given table version. Resolves to the latest
-    active table version if no table version number is given. Returns the
-    partition staging area for the staged stream.
+    active table version if no table version is given. Returns the partition
+    staging area for the staged stream.
     """
     raise NotImplementedError("stage_stream not implemented")
 
@@ -316,13 +316,12 @@ def commit_stream(
 def delete_stream(
         namespace: str,
         table_name: str,
-        table_version_number: Optional[int] = None,
+        table_version: Optional[str] = None,
         *args,
         **kwargs):
     """
     Deletes the stream currently registered with the given table version.
-    Resolves to the latest active table version if no table version number is
-    given.
+    Resolves to the latest active table version if no table version is given.
     """
     raise NotImplementedError("delete_stream not implemented")
 
@@ -330,14 +329,14 @@ def delete_stream(
 def get_partition_staging_area(
         namespace: str,
         table_name: str,
-        table_version_number: Optional[int] = None,
+        table_version: Optional[str] = None,
         *args,
         **kwargs) -> Optional[Dict[str, Any]]:
     """
     Gets the partition staging area for the most recently committed stream of
     the given table version and partition key values. Resolves to the latest
-    active table version if no table version number is given. Returns None if
-    no stream has been committed for the given table version and partition key
+    active table version if no table version is given. Returns None if no
+    stream has been committed for the given table version and partition key
     values.
     """
     raise NotImplementedError("get_partition_staging_area not implemented")
@@ -375,14 +374,14 @@ def commit_partition(
 def delete_partition(
         namespace: str,
         table_name: str,
-        table_version_number: Optional[int] = None,
+        table_version: Optional[str] = None,
         partition_values: Optional[List[str]] = None,
         *args,
         **kwargs):
     """
     Deletes the given partition from the specified table version. Resolves to
-    the latest active table version if no table version number is given.
-    Partition values should not be specified for unpartitioned tables.
+    the latest active table version if no table version is given. Partition
+    values should not be specified for unpartitioned tables.
     """
     raise NotImplementedError("delete_partition not implemented")
 
@@ -479,7 +478,7 @@ def table_exists(
 def get_table_version(
         namespace: str,
         table_name: str,
-        table_version: int,
+        table_version: str,
         *args,
         **kwargs) -> Optional[Dict[str, Any]]:
     """
@@ -514,7 +513,7 @@ def get_latest_active_table_version(
 def get_table_version_column_names(
         namespace: str,
         table_name: str,
-        table_version: Optional[int] = None,
+        table_version: Optional[str] = None,
         *args,
         **kwargs) -> Optional[List[str]]:
     """
@@ -529,7 +528,7 @@ def get_table_version_column_names(
 def table_version_exists(
         namespace: str,
         table_name: str,
-        table_version: int,
+        table_version: str,
         *args,
         **kwargs) -> bool:
     """

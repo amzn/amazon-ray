@@ -101,7 +101,7 @@ def get_table_name(staging_area: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def get_table_version(staging_area: Dict[str, Any]) -> Optional[int]:
+def get_table_version(staging_area: Dict[str, Any]) -> Optional[str]:
     stream_locator = get_stream_locator(staging_area)
     if stream_locator:
         return sl.get_table_version(stream_locator)

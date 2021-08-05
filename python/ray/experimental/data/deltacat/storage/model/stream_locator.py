@@ -6,14 +6,14 @@ from ray.experimental.data.deltacat.utils.common import sha1_hexdigest
 def of(
         namespace: Optional[str],
         table_name: Optional[str],
-        table_version: Optional[int],
+        table_version: Optional[str],
         stream_id: Optional[str],
         storage_type: Optional[str]) -> Dict[str, Any]:
 
     return {
         "namespace": namespace,
         "tableName": table_name,
-        "versionNumber": table_version,
+        "tableVersion": table_version,
         "streamId": stream_id,
         "storageType": storage_type,
     }
@@ -41,15 +41,15 @@ def set_table_name(
     stream_locator["tableName"] = table_name
 
 
-def get_table_version(stream_locator: Dict[str, Any]) -> Optional[int]:
-    return stream_locator.get("versionNumber")
+def get_table_version(stream_locator: Dict[str, Any]) -> Optional[str]:
+    return stream_locator.get("tableVersion")
 
 
 def set_table_version(
         stream_locator: Dict[str, Any],
-        table_version: Optional[int]):
+        table_version: Optional[str]):
 
-    stream_locator["versionNumber"] = table_version
+    stream_locator["tableVersion"] = table_version
 
 
 def get_stream_id(stream_locator: Dict[str, Any]) -> Optional[str]:

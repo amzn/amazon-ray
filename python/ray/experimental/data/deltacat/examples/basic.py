@@ -95,7 +95,7 @@ def run_all(dc_storage = unimplemented_deltacat_storage):
                         'streamLocator': {
                             'namespace': 'TestNamespace',
                             'tableName': 'TestTable',
-                            'versionNumber': 1,
+                            'tableVersion': '1',
                             'streamId': 'dbcbbf56-4bcb-4b94-8cf2-1c6d57ccfe74',
                             'storageType': 'AwsGlueCatalog'
                         }

@@ -23,10 +23,10 @@ def run_all(dc_storage_ray=unimplemented_deltacat_storage):
         )
     )
 
-    compacted_parquet_delta = lr.get_items(deltas_list_result)[0]
+    delta = lr.get_items(deltas_list_result)[0]
 
     pa_table_pending_ids = ray.get(
-        dc_storage_ray.download_delta.remote(compacted_parquet_delta)
+        dc_storage_ray.download_delta.remote(delta)
     )
 
     pending_futures = []

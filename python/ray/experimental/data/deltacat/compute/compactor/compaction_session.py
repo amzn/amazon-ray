@@ -195,7 +195,7 @@ def execute_compaction_round(
                 deltacat_storage,
             )
         hb_tasks_pending.append(hb_task_promise)
-    logger.info(f"Getting {len(hb_tasks_pending)} hash bucket task results...")
+    logger.info(f"Getting {len(hb_tasks_pending)} hash bucket results...")
     hb_results = ray.get(hb_tasks_pending)
     logger.info(f"Got {len(hb_results)} hash bucket results.")
     all_hash_group_idx_to_obj_id = defaultdict(list)
@@ -261,7 +261,7 @@ def execute_compaction_round(
         dd_tasks_pending.append(dd_task_promise)
         dd_stats_promises.append(dd_stat)
         i += 1
-    logger.info(f"Getting {len(dd_tasks_pending)} dedupe task results...")
+    logger.info(f"Getting {len(dd_tasks_pending)} dedupe results...")
     dd_results = ray.get(dd_tasks_pending)
     logger.info(f"Got {len(dd_results)} dedupe results.")
     all_mat_buckets_to_obj_id = defaultdict(list)
@@ -303,9 +303,9 @@ def execute_compaction_round(
         mat_tasks_pending.append(mat_task_promise)
         i += 1
 
-    logger.info(f"Getting {len(mat_tasks_pending)} mat task results...")
+    logger.info(f"Getting {len(mat_tasks_pending)} materialize results...")
     mat_results = ray.get(mat_tasks_pending)
-    logger.info(f"Got {len(mat_results)} mat results at.")
+    logger.info(f"Got {len(mat_results)} materialize results.")
 
     delta_manifests = sorted(
         [mr.get_delta_manifest(m) for m in mat_results],
