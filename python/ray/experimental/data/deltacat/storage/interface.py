@@ -82,7 +82,7 @@ def list_partitions_pending_commit(
 def list_deltas(
         namespace: str,
         table_name: str,
-        partition_values: Optional[List[str]] = None,
+        partition_values: Optional[List[Any]] = None,
         pagination_key: Optional[str] = None,
         table_version: Optional[str] = None,
         first_stream_position: Optional[int] = None,
@@ -119,7 +119,7 @@ def list_deltas_pending_commit(
 def latest_delta(
         namespace: str,
         table_name: str,
-        partition_values: Optional[List[str]],
+        partition_values: Optional[List[Any]],
         table_version: Optional[str] = None,
         *args,
         **kwargs) -> Dict[str, Any]:
@@ -222,7 +222,7 @@ def update_namespace(
 def create_table_version(
         namespace: str,
         table_name: str,
-        schema: Optional[str] = None,
+        schema: Optional[pa.Schema] = None,
         partition_keys: Optional[List[Dict[str, Any]]] = None,
         primary_key_column_names: Optional[List[str]] = None,
         table_version_description: Optional[str] = None,
@@ -344,7 +344,7 @@ def get_partition_staging_area(
 
 def stage_partition(
         partition_staging_area: Dict[str, Any],
-        partition_values: Optional[List[str]] = None,
+        partition_values: Optional[List[Any]] = None,
         *args,
         **kwargs) -> Dict[str, Any]:
     """
@@ -375,7 +375,7 @@ def delete_partition(
         namespace: str,
         table_name: str,
         table_version: Optional[str] = None,
-        partition_values: Optional[List[str]] = None,
+        partition_values: Optional[List[Any]] = None,
         *args,
         **kwargs):
     """
@@ -388,7 +388,7 @@ def delete_partition(
 
 def get_delta_staging_area(
         partition_staging_area: Dict[str, Any],
-        partition_values: Optional[List[str]] = None,
+        partition_values: Optional[List[Any]] = None,
         *args,
         **kwargs) -> Optional[Dict[str, Any]]:
     """

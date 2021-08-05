@@ -5,7 +5,7 @@ from ray.experimental.data.deltacat.storage.model import stream_locator as sl
 
 def of(
         stream_locator: Optional[Dict[str, Any]],
-        partition_values: Optional[List[str]],
+        partition_values: Optional[List[Any]],
         partition_id: Optional[str]) -> Dict[str, Any]:
 
     return {
@@ -28,14 +28,14 @@ def set_stream_locator(
 
 
 def get_partition_values(partition_locator: Dict[str, Any]) \
-        -> Optional[List[str]]:
+        -> Optional[List[Any]]:
 
     return partition_locator.get("partitionValues")
 
 
 def set_partition_values(
         partition_locator: Dict[str, Any],
-        partition_values: Optional[List[str]]):
+        partition_values: Optional[List[Any]]):
 
     partition_locator["partitionValues"] = partition_values
 

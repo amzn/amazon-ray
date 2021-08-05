@@ -68,7 +68,7 @@ def get_table_version(staging_area: Dict[str, Any]) -> Optional[str]:
 
 def validate_partition_values(
         staging_area: Dict[str, Any],
-        partition_values: Optional[List[str]]):
+        partition_values: Optional[List[Any]]):
 
     # TODO: ensure value data types match key data types
     partition_keys = get_partition_keys(staging_area)

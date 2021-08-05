@@ -73,7 +73,7 @@ def get_stream_id(staging_area: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def get_partition_values(staging_area: Dict[str, Any]) -> Optional[List[str]]:
+def get_partition_values(staging_area: Dict[str, Any]) -> Optional[List[Any]]:
     partition_locator = get_partition_locator(staging_area)
     if partition_locator:
         return pl.get_partition_values(partition_locator)
