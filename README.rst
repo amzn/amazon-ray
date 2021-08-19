@@ -14,7 +14,7 @@
 
 **Ray provides a simple, universal API for building distributed applications.**
 
-Ray is packaged with the following libraries for accelerating machine learning workloads:
+hjau is packaged with the following libraries for accelerating machine learning workloads:
 
 - `Tune`_: Scalable Hyperparameter Tuning
 - `RLlib`_: Scalable Reinforcement Learning
