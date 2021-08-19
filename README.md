@@ -1,4 +1,4 @@
-## Amazon Ray
+## Test Ray
 
 **Ray provides a simple, universal API for building distributed applications.**
 Please see the [Latest Ray Docs](https://ray.readthedocs.io/en/latest/index.html).
