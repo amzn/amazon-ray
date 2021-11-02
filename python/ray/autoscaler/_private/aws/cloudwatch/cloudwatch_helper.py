@@ -6,7 +6,7 @@ import logging
 import time
 import hashlib
 from enum import Enum
-from ray.autoscaler._private.aws.utils import client_cache
+from ray.autoscaler._private.aws.utils import client_cache, resource_cache
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,11 @@ class CloudwatchHelper:
         self.cluster_name = cluster_name
         self.provider_config = provider_config
         region = provider_config["region"]
-        self.ec2_client = client_cache("ec2", region)
+        ec2_resource = resource_cache("ec2", region)
+        self.ec2_client = ec2_resource.meta.client
         self.ssm_client = client_cache("ssm", region)
-        self.cloudwatch_client = client_cache("cloudwatch", region)
+        cloudwatch_resource = resource_cache("cloudwatch", region)
+        self.cloudwatch_client = cloudwatch_resource.meta.client
         self.CLOUDWATCH_CONFIG_TYPE_TO_CONFIG_VARIABLE_REPLACE_FUNC = {
             CloudwatchConfigType.AGENT.value: self.
             _replace_cwa_config_variables,

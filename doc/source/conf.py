@@ -17,6 +17,7 @@ import shutil
 import sys
 import os
 import urllib
+
 sys.path.insert(0, os.path.abspath('.'))
 from custom_directives import CustomGalleryItemDirective
 from datetime import datetime
@@ -96,9 +97,9 @@ for mod_name in MOCK_MODULES:
 sys.modules["tensorflow"].VERSION = "9.9.9"
 sys.modules["tensorflow.keras.callbacks"] = ChildClassMock()
 sys.modules["pytorch_lightning"] = ChildClassMock()
-sys.modules["xgboost"] = ChildClassMock()
-sys.modules["xgboost.core"] = ChildClassMock()
-sys.modules["xgboost.callback"] = ChildClassMock()
+
+assert "ray" not in sys.modules, (
+    "If ray is already imported, we will not render documentation correctly!")
 
 
 class SimpleClass(object):

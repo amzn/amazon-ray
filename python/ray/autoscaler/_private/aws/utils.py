@@ -128,28 +128,37 @@ def boto_exception_handler(msg, *args, **kwargs):
     return ExceptionHandlerContextManager()
 
 
+
 @lru_cache()
-def resource_cache(name, region, **kwargs):
-    boto_config = Config(retries={"max_attempts": BOTO_MAX_RETRIES})
+def resource_cache(name, region, max_retries=BOTO_MAX_RETRIES, **kwargs):
+    cli_logger.verbose("Creating AWS resource `{}` in `{}`", cf.bold(name),
+                       cf.bold(region))
+    kwargs.setdefault(
+        "config",
+        Config(retries={"max_attempts": max_retries}),
+    )
     return boto3.resource(
         name,
         region,
-        config=boto_config,
         **kwargs,
     )
 
 
 @lru_cache()
-def client_cache(name, region, **kwargs):
+def client_cache(name, region, max_retries=BOTO_MAX_RETRIES, **kwargs):
     try:
         # try to re-use a client from the resource cache first
-        return resource_cache(name, region, **kwargs).meta.client
+        return resource_cache(name, region, max_retries, **kwargs).meta.client
     except ResourceNotExistsError:
         # fall back for clients without an associated resource
-        boto_config = Config(retries={"max_attempts": BOTO_MAX_RETRIES})
+        cli_logger.verbose("Creating AWS client `{}` in `{}`", cf.bold(name),
+                           cf.bold(region))
+        kwargs.setdefault(
+            "config",
+            Config(retries={"max_attempts": max_retries}),
+        )
         return boto3.client(
             name,
             region,
-            config=boto_config,
             **kwargs,
         )

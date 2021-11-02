@@ -7,7 +7,7 @@ from unittest.mock import patch, Mock
 import ray
 import ray.util.client.server.server as ray_client_server
 import ray.client_builder as client_builder
-from ray.test_utils import run_string_as_driver_nonblocking, \
+from ray.test_utils import run_string_as_driver_nonblocking,\
     wait_for_condition, run_string_as_driver
 
 from ray.cluster_utils import Cluster
@@ -225,7 +225,7 @@ def test_module_lacks_client_builder():
 
 @pytest.mark.skipif(
     sys.platform == "win32", reason="RC Proxy is Flaky on Windows.")
-def test_disconnect(call_ray_stop_only):
+def test_disconnect(call_ray_stop_only, set_enable_auto_connect):
     subprocess.check_output(
         "ray start --head --ray-client-server-port=25555", shell=True)
     with ray.client("localhost:25555").namespace("n1").connect():
@@ -254,7 +254,6 @@ def test_disconnect(call_ray_stop_only):
     ctx.disconnect()
     # Check idempotency
     ctx.disconnect()
-
     with pytest.raises(ray.exceptions.RaySystemError):
         ray.put(300)
 
