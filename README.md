@@ -24,7 +24,7 @@ Latest Amazon Ray wheels:
 
 All of the above wheels have passed unit tests. They can be installed via `pip install -U [wheel URL]`.
 
-### Images
+### Amazon Ray Images
 Latest Ray-optimized EC2 AMIs with Amazon Ray wheels pre-installed:
 
 | Ray Wheel                                                                                                                       | Base AMI                                     | AMI ID                | Region    |
@@ -129,6 +129,19 @@ setup_commands:
   - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a stop
 ```
 
+### Unified CloudWatch Agent Images
+The AMIs below ship with the [Unified CloudWatch Agent]
+(https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/UseCloudWatchUnifiedAgent.html) 
+pre-installed. They should be used with any Ray cluster declaring an `agent` 
+configuration under the `cloudwatch` section of its AWS [cluster config file]
+(https://docs.ray.io/en/latest/cluster/config.html).
+
+| Base AMI                                     | AMI ID                | Region    | Unified CloudWatch Agent Version |
+|----------------------------------------------|-----------------------|-----------|----------------------------------|
+| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-069f2811478f86c20 | us-east-1 | v1.247348.0b251302               |
+| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-058cc0932940c2b8b | us-east-2 | v1.247348.0b251302               |
+| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-044f95c9ef12883ef | us-west-1 | v1.247348.0b251302               |
+| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0d88d9cbe28fac870 | us-west-2 | v1.247348.0b251302               |
 
 ## Security
 
