@@ -22,7 +22,8 @@ from ray.autoscaler._private.cli_logger import cli_logger, cf
 import ray.ray_constants as ray_constants
 
 from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper import \
-    CloudwatchHelper
+    CloudwatchHelper, CloudwatchConfigType, \
+    CLOUDWATCH_AGENT_INSTALLED_AMI_TAG, CLOUDWATCH_AGENT_INSTALLED_TAG
 
 logger = logging.getLogger(__name__)
 
@@ -360,6 +361,14 @@ class AWSNodeProvider(NodeProvider):
                 "Key": k,
                 "Value": v,
             })
+        if CloudwatchHelper.cloudwatch_config_exists(
+                self.provider_config, CloudwatchConfigType.AGENT):
+            cwa_installed = self._check_ami_cwa_installation(node_config)
+            if cwa_installed:
+                tag_pairs.extend([{
+                    "Key": CLOUDWATCH_AGENT_INSTALLED_TAG,
+                    "Value": "True",
+                }])
         tag_specs = [{
             "ResourceType": "instance",
             "Tags": tag_pairs,
@@ -431,13 +440,7 @@ class AWSNodeProvider(NodeProvider):
                         "create_instances: Attempt failed with {}, retrying.",
                         exc)
 
-        # TODO: Idempotently correct CloudWatch setup errors on cached nodes?
-        node_ids = [n.id for n in created]
-        CloudwatchHelper(self.provider_config, node_ids, self.cluster_name). \
-            setup_from_config()
-
         return created_nodes_dict
-
 
     def terminate_node(self, node_id):
         node = self._get_cached_node(node_id)
@@ -464,6 +467,20 @@ class AWSNodeProvider(NodeProvider):
         # If this leak becomes bad, we can garbage collect the tag cache when
         # the node cache is updated.
         pass
+
+    def _check_ami_cwa_installation(self, config):
+        response = self.ec2.meta.client.describe_images(
+            ImageIds=[config["ImageId"]])
+        cwa_installed = False
+        images = response.get("Images")
+        if images:
+            assert len(images) == 1, \
+                f"Expected to find only 1 AMI with the given ID, " \
+                f"but found {len(images)}."
+            image_name = images[0].get("Name", "")
+            if CLOUDWATCH_AGENT_INSTALLED_AMI_TAG in image_name:
+                cwa_installed = True
+        return cwa_installed
 
     def terminate_nodes(self, node_ids):
         if not node_ids:
@@ -517,10 +534,6 @@ class AWSNodeProvider(NodeProvider):
             return self.cached_nodes[node_id]
 
         return self._get_node(node_id)
-
-    def update_nodes(self, node_ids):
-        CloudwatchHelper(self.provider_config, node_ids, self.cluster_name). \
-            update_from_config()
 
     @staticmethod
     def bootstrap_config(cluster_config):

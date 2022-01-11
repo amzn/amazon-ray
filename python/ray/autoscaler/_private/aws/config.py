@@ -308,7 +308,7 @@ def _configure_iam_role(config):
     _set_config_info(head_instance_profile_src="default")
 
     instance_profile_name = cwh.resolve_instance_profile_name(
-        config,
+        config["provider"],
         DEFAULT_RAY_INSTANCE_PROFILE,
     )
     profile = _get_instance_profile(instance_profile_name, config)
@@ -316,11 +316,11 @@ def _configure_iam_role(config):
     if profile is None:
         cli_logger.verbose(
             "Creating new IAM instance profile {} for use as the default.",
-            cf.bold(DEFAULT_RAY_INSTANCE_PROFILE))
+            cf.bold(instance_profile_name))
         client = _client("iam", config)
         client.create_instance_profile(
-            InstanceProfileName=DEFAULT_RAY_INSTANCE_PROFILE)
-        profile = _get_instance_profile(DEFAULT_RAY_INSTANCE_PROFILE, config)
+            InstanceProfileName=instance_profile_name)
+        profile = _get_instance_profile(instance_profile_name, config)
         time.sleep(15)  # wait for propagation
 
     cli_logger.doassert(profile is not None,
@@ -328,13 +328,13 @@ def _configure_iam_role(config):
     assert profile is not None, "Failed to create instance profile"
 
     if not profile.roles:
-        role_name = cwh.resolve_iam_role_name(config, DEFAULT_RAY_IAM_ROLE)
+        role_name = cwh.resolve_iam_role_name(config["provider"],
+                                              DEFAULT_RAY_IAM_ROLE)
         role = _get_role(role_name, config)
         if role is None:
             cli_logger.verbose(
                 "Creating new IAM role {} for "
-                "use as the default instance role.",
-                cf.bold(DEFAULT_RAY_IAM_ROLE))
+                "use as the default instance role.", cf.bold(role_name))
             iam = _resource("iam", config)
             policy_doc = {
                 "Statement": [
@@ -348,14 +348,14 @@ def _configure_iam_role(config):
                 ]
             }
             attach_policy_arns = cwh.resolve_policy_arns(
-                config, [
+                config["provider"], iam, [
                     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
                     "arn:aws:iam::aws:policy/AmazonS3FullAccess"
                 ])
 
             iam.create_role(
                 RoleName=role_name,
-                AssumeRolePolicyDocument=json.dump(policy_doc))
+                AssumeRolePolicyDocument=json.dumps(policy_doc))
             role = _get_role(role_name, config)
             cli_logger.doassert(role is not None,
                                 "Failed to create role.")  # todo: err msg
@@ -871,7 +871,7 @@ def _configure_from_launch_template(config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _configure_node_type_from_launch_template(
-    config: Dict[str, Any], node_type: Dict[str, Any]) -> Dict[str, Any]:
+        config: Dict[str, Any], node_type: Dict[str, Any]) -> Dict[str, Any]:
     """
     Merges any launch template data referenced by the given node type's
     node config into the parent node config. Any parameters specified in
@@ -901,7 +901,7 @@ def _configure_node_type_from_launch_template(
 
 
 def _configure_node_cfg_from_launch_template(
-    config: Dict[str, Any], node_cfg: Dict[str, Any]) -> Dict[str, Any]:
+        config: Dict[str, Any], node_cfg: Dict[str, Any]) -> Dict[str, Any]:
     """
     Merges any launch template data referenced by the given node type's
     node config into the parent node config. Any parameters specified in
@@ -1014,7 +1014,7 @@ def _configure_node_type_from_network_interface(node_type: Dict[str, Any]) \
 
 
 def _configure_subnets_and_groups_from_network_interfaces(
-    node_cfg: Dict[str, Any]) -> Dict[str, Any]:
+        node_cfg: Dict[str, Any]) -> Dict[str, Any]:
     """
     Copies all network interface subnet and security group IDs into their
     parent node config.
