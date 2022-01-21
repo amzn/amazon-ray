@@ -64,7 +64,7 @@ setup_commands: []
 
 #### CloudWatch Integration
 Each AMI comes with the
-[CloudWatch Unified Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/UseCloudWatchUnifiedAgent.html)
+[Unified CloudWatch Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/UseCloudWatchUnifiedAgent.html)
 pre-installed and configured. The agent will automatically collect additional system level metrics for each EC2
 instance in your Ray cluster and write Ray system logs out to the CloudWatch log groups *ray_logs_out* and
 *ray_logs_err*.
@@ -119,7 +119,7 @@ A tail can be acquired on all logs written to a CloudWatch log group by
 aws logs tail $log_group_name --follow
 ```
 
-To disable the CloudWatch Unified Agent at cluster launch time, add the following setup command to your autoscaler
+To disable the Unified CloudWatch Agent at cluster launch time, add the following setup command to your autoscaler
 config:
 
 ```yaml
