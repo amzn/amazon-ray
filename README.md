@@ -15,12 +15,10 @@ Latest Amazon Ray wheels:
 
 | Platform | Python Version | Ray Version | Wheel                                                                                                 |
 |----------|----------------|-------------|-------------------------------------------------------------------------------------------------------|
-| Linux    | Python 3.6     | 1.2.0       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)|
-| Linux    | Python 3.7     | 1.2.0       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)|
-| Linux    | Python 3.8     | 1.2.0       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) |
-| Windows  | Python 3.6     | 1.2.0       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-win_amd64.whl)           |
-| Windows  | Python 3.7     | 1.2.0       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-win_amd64.whl)           |
-| Windows  | Python 3.8     | 1.2.0       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-win_amd64.whl)            |
+| Linux    | Python 3.6     | 1.9.2       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp36-cp36m-manylinux2014_x86_64.whl)|
+| Linux    | Python 3.7     | 1.9.2       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp37-cp37m-manylinux2014_x86_64.whl)|
+| Linux    | Python 3.8     | 1.9.2       | [Link](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp38-cp38-manylinux2014_x86_64.whl) |
+
 
 All of the above wheels have passed unit tests. They can be installed via `pip install -U [wheel URL]`.
 
@@ -29,18 +27,18 @@ Latest Ray-optimized EC2 AMIs with Amazon Ray wheels pre-installed:
 
 | Ray Wheel                                                                                                                       | Base AMI                                     | AMI ID                | Region    |
 |---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|-----------------------|-----------|
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-025b0741c5ebf7d9f | us-east-1 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-063108a9ccbb12ef2 | us-east-2 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0956a36239fe22b61 | us-west-1 |
-| [Linux - Python 3.6 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-070beff7e6aabee85 | us-west-2 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0a4da390e7a168bb9 | us-east-1 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0a4eafb4b01445f67 | us-east-2 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-040918e102e989b89 | us-west-1 |
-| [Linux - Python 3.7 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0e17b2106eb95aeeb | us-west-2 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-04a8d96070f130eb1 | us-east-1 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-09c70a296453d2d57 | us-east-2 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0f75730bc24008b20 | us-west-1 |
-| [Linux - Python 3.8 - Ray 1.2.0](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.2.0-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-04e23701d01e53705 | us-west-2 |
+| [Linux - Python 3.6 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0ec076d1d4cf24740 | us-east-1 |
+| [Linux - Python 3.6 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-05c5ae4db3d904e36 | us-east-2 |
+| [Linux - Python 3.6 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0571beb34ef22a29f | us-west-1 |
+| [Linux - Python 3.6 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp36-cp36m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-049c97be6e59b38b1 | us-west-2 |
+| [Linux - Python 3.7 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0cd43cad722dc3ae6 | us-east-1 |
+| [Linux - Python 3.7 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-08f28214c5e591d5d | us-east-2 |
+| [Linux - Python 3.7 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0f10a7def52ab3849 | us-west-1 |
+| [Linux - Python 3.7 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp37-cp37m-manylinux2014_x86_64.whl)| AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0b298f3f656bc15e1 | us-west-2 |
+| [Linux - Python 3.8 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-0ea510fcb67686b48 | us-east-1 |
+| [Linux - Python 3.8 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-01cff3275ce4dc684 | us-east-2 |
+| [Linux - Python 3.8 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-09f8352c0f492acda | us-west-1 |
+| [Linux - Python 3.8 - Ray 1.9.2](http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.9.2-cp38-cp38-manylinux2014_x86_64.whl) | AWS Deep Learning AMI (Ubuntu 18.04, 64-bit) | ami-06d3d2ee794b34a21 | us-west-2 |
 
 All of the above AMIs have passed unit tests and EC2 cluster integration tests. To use any of the above AMIs,
 first ensure that you're launching your Ray EC2 cluster in the same region as the AMI, then specify the AMI ID
@@ -130,9 +128,11 @@ setup_commands:
 ```
 
 ### Unified CloudWatch Agent Images
-The AMIs below ship with the [Unified CloudWatch Agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/UseCloudWatchUnifiedAgent.html)
-pre-installed. They should be used with any Ray cluster declaring an `agent` configuration under the
-`cloudwatch` section of its AWS [cluster config file](https://docs.ray.io/en/latest/cluster/config.html).
+The AMIs below ship with the [Unified CloudWatch Agent]
+(https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/UseCloudWatchUnifiedAgent.html) 
+pre-installed. They should be used with any Ray cluster declaring an `agent` 
+configuration under the `cloudwatch` section of its AWS [cluster config file]
+(https://docs.ray.io/en/latest/cluster/config.html).
 
 | Base AMI                                     | AMI ID                | Region    | Unified CloudWatch Agent Version |
 |----------------------------------------------|-----------------------|-----------|----------------------------------|
