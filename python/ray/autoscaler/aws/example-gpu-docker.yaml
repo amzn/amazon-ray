@@ -115,6 +115,7 @@ file_mounts: {
 setup_commands: []
     # - pip install -U "amzn-ray[default] @ http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp37-cp37m-manylinux2014_x86_64.whl"
 
+
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
     - pip install boto3==1.4.8  # 1.4.8 adds InstanceMarketOptions

@@ -40,9 +40,5 @@ updates:
     # Only 5 upgrade PRs open at a time.
     open-pull-requests-limit: 5
     reviewers:
-<<<<<<< HEAD
-      - "scv119"
-      - "clarkzinzow"
-=======
       - "amzn/amazon-ray-program"
->>>>>>> 6b379daed (Add amazon-ray branch relationship description)
+
