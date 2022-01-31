@@ -8,8 +8,8 @@ import itertools
 import collections
 import logging.handlers
 
-from ray.new_dashboard.modules.event import event_consts
-from ray.new_dashboard.utils import async_loop_forever, create_task
+from ray.dashboard.modules.event import event_consts
+from ray.dashboard.utils import async_loop_forever, create_task
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ def monitor_events(
         finally:
             os.close(fd)
 
-    @async_loop_forever(scan_interval_seconds)
+    @async_loop_forever(scan_interval_seconds, cancellable=True)
     async def _scan_event_log_files():
         # Scan event files.
         source_files = await loop.run_in_executor(None, _get_source_files,

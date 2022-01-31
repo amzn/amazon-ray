@@ -15,8 +15,8 @@ from ray import tune
 from ray.tune.result import RESULT_DUPLICATE
 from ray.tune.logger import NoopLogger
 from ray.tune.function_runner import wrap_function
-from ray.tune.resources import Resources
 from ray.tune.trainable import DistributedTrainable
+from ray.tune.utils.placement_groups import PlacementGroupFactory
 from ray.tune.utils.trainable import PlacementGroupUtil, TrainableUtil
 from ray.tune.utils import detect_checkpoint_function
 from ray.util.sgd.torch.utils import setup_process_group, setup_address
@@ -66,7 +66,7 @@ class _TorchTrainable(DistributedTrainable):
 
     @classmethod
     def default_process_group_parameters(cls) -> Dict:
-        return dict(timeout=timedelta(NCCL_TIMEOUT_S), backend="gloo")
+        return dict(timeout=timedelta(seconds=NCCL_TIMEOUT_S), backend="gloo")
 
     def setup(self, config: Dict):
         self._finished = False
@@ -131,8 +131,9 @@ class _TorchTrainable(DistributedTrainable):
 
     def load_checkpoint(self, checkpoint_dir: str):
         checkpoint_obj = TrainableUtil.checkpoint_to_object(checkpoint_dir)
-        return ray.get(
-            w.restore_from_object.remote(checkpoint_obj) for w in self.workers)
+        return ray.get([
+            w.restore_from_object.remote(checkpoint_obj) for w in self.workers
+        ])
 
     def stop(self):
         ray.get([worker.stop.remote() for worker in self.workers])
@@ -171,7 +172,7 @@ def DistributedTrainableCreator(func: Callable,
         backend (str): One of "gloo", "nccl".
         timeout_s (float): Seconds before the torch process group
             times out. Useful when machines are unreliable. Defaults
-            to 60 seconds. This value is also reused for triggering
+            to 1800 seconds. This value is also reused for triggering
             placement timeouts if forcing colocation.
 
     Returns:
@@ -188,7 +189,7 @@ def DistributedTrainableCreator(func: Callable,
         analysis = tune.run(trainable_cls)
     """
     if use_gpu:
-        raise ValueError(
+        raise DeprecationWarning(
             "use_gpu is deprecated. Use 'num_gpus_per_worker' instead.")
     detect_checkpoint_function(func, abort=True)
     if num_workers_per_host:
@@ -206,16 +207,15 @@ def DistributedTrainableCreator(func: Callable,
 
         @classmethod
         def default_process_group_parameters(self) -> Dict:
-            return dict(timeout=timedelta(timeout_s), backend=backend)
+            return dict(timeout=timedelta(seconds=timeout_s), backend=backend)
 
         @classmethod
-        def default_resource_request(cls, config: Dict) -> Resources:
-
-            return Resources(
-                cpu=0,
-                gpu=0,
-                extra_cpu=num_cpus_per_worker * num_workers,
-                extra_gpu=num_gpus_per_worker * num_workers)
+        def default_resource_request(cls,
+                                     config: Dict) -> PlacementGroupFactory:
+            return PlacementGroupFactory([{}] + [{
+                "CPU": cls._num_cpus_per_worker,
+                "GPU": cls._num_gpus_per_worker
+            }] * num_workers)
 
     return WrappedDistributedTorchTrainable
 

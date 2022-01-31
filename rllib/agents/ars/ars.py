@@ -5,6 +5,7 @@
 from collections import namedtuple
 import logging
 import numpy as np
+import random
 import time
 
 import ray
@@ -16,6 +17,8 @@ from ray.rllib.agents.es.es_tf_policy import rollout
 from ray.rllib.env.env_context import EnvContext
 from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
 from ray.rllib.utils.annotations import override
+from ray.rllib.utils.deprecation import Deprecated
+from ray.rllib.utils.torch_utils import set_torch_seed
 from ray.rllib.utils import FilterManager
 
 logger = logging.getLogger(__name__)
@@ -41,8 +44,8 @@ DEFAULT_CONFIG = with_common_config({
     "offset": 0,
     # ARS will use Trainer's evaluation WorkerSet (if evaluation_interval > 0).
     # Therefore, we must be careful not to use more than 1 env per eval worker
-    # (would break ARSPolicy's compute_action method) and to not do obs-
-    # filtering.
+    # (would break ARSPolicy's compute_single_action method) and to not do
+    # obs-filtering.
     "evaluation_config": {
         "num_envs_per_worker": 1,
         "observation_filter": "NoFilter"
@@ -84,6 +87,18 @@ class Worker:
                  noise,
                  worker_index,
                  min_task_runtime=0.2):
+
+        # Set Python random, numpy, env, and torch/tf seeds.
+        seed = config.get("seed")
+        if seed is not None:
+            # Python random module.
+            random.seed(seed)
+            # Numpy.
+            np.random.seed(seed)
+            # Torch.
+            if config.get("framework") == "torch":
+                set_torch_seed(seed)
+
         self.min_task_runtime = min_task_runtime
         self.config = config
         self.config["single_threaded"] = True
@@ -91,6 +106,13 @@ class Worker:
 
         env_context = EnvContext(config["env_config"] or {}, worker_index)
         self.env = env_creator(env_context)
+        # Seed the env, if gym.Env.
+        if not hasattr(self.env, "seed"):
+            logger.info("Env doesn't support env.seed(): {}".format(self.env))
+        # Gym.env.
+        else:
+            self.env.seed(seed)
+
         from ray.rllib import models
         self.preprocessor = models.ModelCatalog.get_preprocessor(self.env)
 
@@ -223,7 +245,7 @@ class ARSTrainer(Trainer):
         return self.policy
 
     @override(Trainer)
-    def step(self):
+    def step_attempt(self):
         config = self.config
 
         theta = self.policy.get_flat_weights()
@@ -326,11 +348,15 @@ class ARSTrainer(Trainer):
             w.__ray_terminate__.remote()
 
     @override(Trainer)
-    def compute_action(self, observation, *args, **kwargs):
+    def compute_single_action(self, observation, *args, **kwargs):
         action, _, _ = self.policy.compute_actions([observation], update=True)
         if kwargs.get("full_fetch"):
             return action[0], [], {}
         return action[0]
+
+    @Deprecated(new="compute_single_action", error=False)
+    def compute_action(self, observation, *args, **kwargs):
+        return self.compute_single_action(observation, *args, **kwargs)
 
     @override(Trainer)
     def _sync_weights_to_workers(self, *, worker_set=None, workers=None):

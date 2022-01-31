@@ -15,6 +15,7 @@ from ray.rllib.agents.trainer import COMMON_CONFIG, with_common_config
 from ray.rllib.agents.dqn.dqn import GenericOffPolicyTrainer
 from ray.rllib.contrib.maddpg.maddpg_policy import MADDPGTFPolicy
 from ray.rllib.policy.sample_batch import SampleBatch, MultiAgentBatch
+from ray.rllib.utils.deprecation import DEPRECATED_VALUE
 from ray.rllib.utils import merge_dicts
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,11 @@ DEFAULT_CONFIG = with_common_config({
     # === Replay buffer ===
     # Size of the replay buffer. Note that if async_updates is set, then
     # each worker will have a replay buffer of this size.
-    "buffer_size": int(1e6),
+    "buffer_size": DEPRECATED_VALUE,
+    "replay_buffer_config": {
+        "type": "LocalReplayBuffer",
+        "capacity": int(1e6),
+    },
     # Observation compression. Note that compression makes simulation slow in
     # MPE.
     "compress_observations": False,
@@ -135,13 +140,10 @@ def before_learn_on_batch(multi_agent_batch, policies, train_batch_size):
         if "new_obs" in k:
             new_obs_n.append(v)
 
-    target_act_sampler_n = [p.target_act_sampler for p in policies.values()]
-    feed_dict = dict(zip(new_obs_ph_n, new_obs_n))
-
-    new_act_n = p.sess.run(target_act_sampler_n, feed_dict)
-    samples.update(
-        {"new_actions_%d" % i: new_act
-         for i, new_act in enumerate(new_act_n)})
+    for i, p in enumerate(policies.values()):
+        feed_dict = {new_obs_ph_n[i]: new_obs_n[i]}
+        new_act = p.get_session().run(p.target_act_sampler, feed_dict)
+        samples.update({"new_actions_%d" % i: new_act})
 
     # Share samples among agents.
     policy_batches = {pid: SampleBatch(samples) for pid in policies.keys()}

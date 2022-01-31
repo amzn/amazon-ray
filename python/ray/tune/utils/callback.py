@@ -5,20 +5,11 @@ import os
 
 from ray.tune.callback import Callback
 from ray.tune.progress_reporter import TrialProgressCallback
-from ray.tune.syncer import SyncConfig, detect_sync_to_driver
+from ray.tune.syncer import SyncConfig, detect_cluster_syncer
 from ray.tune.logger import CSVLoggerCallback, CSVLogger, LoggerCallback, \
     JsonLoggerCallback, JsonLogger, LegacyLoggerCallback, Logger, \
     TBXLoggerCallback, TBXLogger
 from ray.tune.syncer import SyncerCallback
-
-try:
-    if "TUNE_TEST_NO_TORCH_IMPORT" in os.environ:
-        _HAS_TORCH = False
-    else:
-        import torch  # noqa: F401
-        _HAS_TORCH = True
-except ImportError:
-    _HAS_TORCH = False
 
 logger = logging.getLogger(__name__)
 
@@ -67,11 +58,9 @@ def create_default_callbacks(callbacks: Optional[List[Callback]],
     last_logger_index = None
     syncer_index = None
 
+    # Deprecate: 1.9
     # Create LegacyLoggerCallback for passed Logger classes
     if loggers:
-        # Todo(krfricke): Deprecate `loggers` argument, print warning here.
-        # Add warning as soon as we ported all loggers to LoggerCallback
-        # classes.
         add_loggers = []
         for trial_logger in loggers:
             if isinstance(trial_logger, LoggerCallback):
@@ -117,18 +106,25 @@ def create_default_callbacks(callbacks: Optional[List[Callback]],
         if not has_json_logger:
             callbacks.append(JsonLoggerCallback())
             last_logger_index = len(callbacks) - 1
-        if not has_tbx_logger and _HAS_TORCH:
-            callbacks.append(TBXLoggerCallback())
-            last_logger_index = len(callbacks) - 1
+        if not has_tbx_logger:
+            try:
+                callbacks.append(TBXLoggerCallback())
+                last_logger_index = len(callbacks) - 1
+            except ImportError:
+                logger.warning(
+                    "The TensorboardX logger cannot be instantiated because "
+                    "either TensorboardX or one of it's dependencies is not "
+                    "installed. Please make sure you have the latest version "
+                    "of TensorboardX installed: `pip install -U tensorboardx`")
 
     # If no SyncerCallback was found, add
     if not has_syncer_callback and os.environ.get(
             "TUNE_DISABLE_AUTO_CALLBACK_SYNCER", "0") != "1":
 
         # Detect Docker and Kubernetes environments
-        _sync_to_driver = detect_sync_to_driver(sync_config.sync_to_driver)
+        _cluster_syncer = detect_cluster_syncer(sync_config)
 
-        syncer_callback = SyncerCallback(sync_function=_sync_to_driver)
+        syncer_callback = SyncerCallback(sync_function=_cluster_syncer)
         callbacks.append(syncer_callback)
         syncer_index = len(callbacks) - 1
 

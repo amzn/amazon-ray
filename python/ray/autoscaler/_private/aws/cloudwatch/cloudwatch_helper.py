@@ -57,7 +57,6 @@ class CloudwatchHelper:
 
     def update_from_config(self, is_head_node: bool) -> None:
         """Discovers and applies CloudWatch config updates as required.
-
         Args:
             is_head_node: whether this node is the head node.
         """
@@ -86,7 +85,6 @@ class CloudwatchHelper:
         """Update remote CloudWatch configs at Parameter Store,
         update hash tag value on node and perform associated operations
         at CloudWatch console if local CloudWatch configs change.
-
         Args:
             is_head_node: whether this node is the head node.
             config_type: CloudWatch config file type.
@@ -650,11 +648,9 @@ class CloudwatchHelper:
     def resolve_instance_profile_name(
             config: Dict[str, Any], default_instance_profile_name: str) -> str:
         """Get default cloudwatch instance profile name.
-
         Args:
             config: provider section of cluster config file.
             default_instance_profile_name: default ray instance profile name.
-
         Returns:
             default cloudwatch instance profile name if cloudwatch config file
                 exists.
@@ -670,11 +666,9 @@ class CloudwatchHelper:
     def resolve_iam_role_name(config: Dict[str, Any],
                               default_iam_role_name: str) -> str:
         """Get default cloudwatch iam role name.
-
         Args:
             config: provider section of cluster config file.
             default_iam_role_name: default ray iam role name.
-
         Returns:
             default cloudwatch iam role name if cloudwatch config file exists.
             default ray iam role name if cloudwatch config file doesn't exist.
@@ -688,12 +682,10 @@ class CloudwatchHelper:
     def resolve_policy_arns(config: Dict[str, Any], iam: Any,
                             default_policy_arns: List[str]) -> List[str]:
         """Attach necessary AWS policies for CloudWatch related operations.
-
         Args:
             config: provider section of cluster config file.
             iam: AWS iam resource.
             default_policy_arns: List of default ray AWS policies.
-
         Returns:
             list of policy arns including additional policies for CloudWatch
                 related operations if cloudwatch agent config is specifed in
@@ -744,14 +736,11 @@ class CloudwatchHelper:
                                  config_type: CloudwatchConfigType) -> bool:
         """Check if CloudWatch configuration was specified by the user
         in their cluster config file.
-
         Specifically, this function checks if a CloudWatch config file is
         specified by the user in their cluster config file.
-
         Args:
             config: provider section of cluster config file.
             config_type: type of CloudWatch config file.
-
         Returns:
             True if config file is specified by user.
             False if config file is not specified.

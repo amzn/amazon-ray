@@ -127,3 +127,4 @@ def get_ssm_param_name(cluster_name, config_type):
     ssm_config_param_name = "AmazonCloudWatch-" + "ray_{}_config_{}". \
             format(config_type, cluster_name)
     return ssm_config_param_name
+

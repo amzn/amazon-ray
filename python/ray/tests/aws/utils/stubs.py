@@ -3,17 +3,20 @@ import copy
 import json
 
 from uuid import uuid4
+
 from ray.tests.aws.utils import helpers
 from ray.tests.aws.utils.mocks import mock_path_exists_key_pair
 from ray.tests.aws.utils.constants import DEFAULT_INSTANCE_PROFILE, \
     DEFAULT_KEY_PAIR, DEFAULT_SUBNET, A_THOUSAND_SUBNETS_IN_DIFFERENT_VPCS, \
-    DEFAULT_LT
+    DEFAULT_LT, TWENTY_SUBNETS_IN_DIFFERENT_AZS
 from ray.tests.aws.utils.helpers import \
     get_cloudwatch_dashboard_config_file_path,\
     get_cloudwatch_alarm_config_file_path
 from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper import \
     CLOUDWATCH_AGENT_INSTALLED_TAG, CLOUDWATCH_CONFIG_HASH_TAG_BASE
 from ray.autoscaler.tags import NODE_KIND_HEAD, TAG_RAY_NODE_KIND
+
+
 
 from unittest import mock
 
@@ -58,6 +61,13 @@ def describe_a_thousand_subnets_in_different_vpcs(ec2_client_stub):
         "describe_subnets",
         expected_params={},
         service_response={"Subnets": A_THOUSAND_SUBNETS_IN_DIFFERENT_VPCS})
+
+
+def describe_twenty_subnets_in_different_azs(ec2_client_stub):
+    ec2_client_stub.add_response(
+        "describe_subnets",
+        expected_params={},
+        service_response={"Subnets": TWENTY_SUBNETS_IN_DIFFERENT_AZS})
 
 
 def skip_to_configure_sg(ec2_client_stub, iam_client_stub):
@@ -590,3 +600,4 @@ def delete_metric_alarms(cloudwatch_client_stub):
         service_response={"ResponseMetadata": {
             "HTTPStatusCode": 200
         }})
+

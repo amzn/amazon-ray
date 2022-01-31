@@ -129,7 +129,7 @@ class TestCuriosity(unittest.TestCase):
         config = ppo.DEFAULT_CONFIG.copy()
         # A very large frozen-lake that's hard for a random policy to solve
         # due to 0.0 feedback.
-        config["env"] = "FrozenLake-v0"
+        config["env"] = "FrozenLake-v1"
         config["env_config"] = {
             "desc": [
                 "SFFFFFFF",
@@ -153,7 +153,7 @@ class TestCuriosity(unittest.TestCase):
         config["lr"] = 0.001
 
         num_iterations = 10
-        for fw in framework_iterator(config):
+        for _ in framework_iterator(config, frameworks=("tf", "torch")):
             # W/ Curiosity. Expect to learn something.
             config["exploration_config"] = {
                 "type": "Curiosity",

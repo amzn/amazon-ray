@@ -509,7 +509,10 @@ def _configure_subnet(config):
 
     if "availability_zone" in config["provider"]:
         azs = config["provider"]["availability_zone"].split(",")
-        subnets = [s for s in subnets if s.availability_zone in azs]
+        subnets = [
+            s for az in azs  # Iterate over AZs first to maintain the ordering
+            for s in subnets if s.availability_zone == az
+        ]
         if not subnets:
             cli_logger.abort(
                 "No usable subnets matching availability zone {} found.\n"
@@ -547,6 +550,7 @@ def _get_vpc_id_of_sg(sg_ids: List[str], config: Dict[str, Any]) -> str:
     Errors if the provided security groups belong to multiple VPCs.
     Errors if no security group with any of the provided ids is identified.
     """
+    # sort security group IDs to support deterministic unit test stubbing
     sg_ids = sorted(set(sg_ids))
 
     ec2 = _resource("ec2", config)
@@ -956,7 +960,7 @@ def _configure_node_cfg_from_launch_template(
 
 
 def _configure_from_network_interfaces(config: Dict[str, Any]) \
-    -> Dict[str, Any]:
+        -> Dict[str, Any]:
     """
     Copies all network interface subnet and security group IDs up to their
     parent node config for each available node type.
@@ -985,7 +989,7 @@ def _configure_from_network_interfaces(config: Dict[str, Any]) \
 
 
 def _configure_node_type_from_network_interface(node_type: Dict[str, Any]) \
-    -> Dict[str, Any]:
+        -> Dict[str, Any]:
     """
     Copies all network interface subnet and security group IDs up to the
     parent node config for the given node type.
@@ -1074,7 +1078,7 @@ def _subnets_in_network_config(config: Dict[str, Any]) -> List[str]:
 
 
 def _security_groups_in_network_config(config: Dict[str, Any]) \
-    -> List[List[str]]:
+        -> List[List[str]]:
     """
     Returns all security group IDs found in the given node config's network
     interfaces.
