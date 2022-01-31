@@ -45,7 +45,11 @@ worker_nodes:
 
 setup_commands:
     # This replaces the standard anaconda Ray installation
+<<<<<<< HEAD
     - ray || pip install -U http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-2.0.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl
+=======
+    - ray || pip install -U http://d168575n8y1h5x.cloudfront.net/latest/ray-2.0.0.dev0-cp36-cp36m-manylinux2014_x86_64.whl
+>>>>>>> 3cee15dce (Initial amzn-ray updates to github settings, wheel URLs, repo references, package info, and documentation.)
     - pip install -q tqdm
 
     # Installing this without -U to make sure we don't replace the existing Ray installation

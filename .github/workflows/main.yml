@@ -5,6 +5,8 @@ on:
     branches-ignore:
       # Don't run CI for Dependabot branch pushes.
       - "dependabot/**"
+      # Don't run CI on the main branch.
+      - "main"
   pull_request:
 
 env:
