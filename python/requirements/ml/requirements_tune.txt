@@ -27,7 +27,7 @@ mlflow==1.21.0
 mxnet==1.8.0.post0
 nevergrad==0.4.3.post7
 optuna==2.9.1
-pytest-remotedata==0.3.2
+pytest-remotedata==0.3.3
 lightning-bolts==0.4.0
 pytorch-lightning==1.4.9
 shortuuid==1.0.1
