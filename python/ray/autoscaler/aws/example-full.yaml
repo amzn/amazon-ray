@@ -45,6 +45,13 @@ provider:
     # Whether to allow node reuse. If set to False, nodes will be terminated
     # instead of stopped.
     cache_stopped_nodes: True # If not present, the default is True.
+    # If specified, publishes head node cluster setup events to an SNS topic.
+    # Additional message parameters specified here will be included in every SNS notification.
+    # cluster_notifications:
+    #     sns_topic_arn: "arn:aws:sns:us-west-2a:012345678901:01234567-89ab-cdef-0123-456789abcdef"
+    #     parameters:
+    #         arg1: foo
+    #         arg2: bar
 
 # How Ray will authenticate with newly launched nodes.
 auth:

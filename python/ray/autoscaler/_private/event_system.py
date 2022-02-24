@@ -1,3 +1,4 @@
+import functools
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -54,6 +55,8 @@ class _EventSystem:
             event: str,
             callback: Union[Callable[[Dict], None], List[Callable[[Dict],
                                                                   None]]],
+            *args,
+            **kwargs,
     ):
         """Stores callback handler for event.
 
@@ -63,10 +66,15 @@ class _EventSystem:
                 registered against.
             callback (Callable[[Dict], None]): Callable object that is invoked
                 when specified event occurs.
+            *args: Variable length arguments to be injected into callbacks.
+            **kwargs: Keyword arguments to be injected into callbacks.
         """
         if event not in CreateClusterEvent.__members__.values():
             cli_logger.warning(f"{event} is not currently tracked, and this"
                                " callback will not be invoked.")
+
+        if args is not None or kwargs is not None:
+            callback = functools.partial(callback, *args, **kwargs)
 
         self.callback_map.setdefault(
             event,

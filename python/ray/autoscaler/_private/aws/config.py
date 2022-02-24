@@ -11,7 +11,8 @@ import logging
 
 import boto3
 import botocore
-
+from botocore.exceptions import ClientError
+from ray.experimental.data.deltacat.aws import snsu
 from ray.autoscaler._private.util import check_legacy_fields
 from ray.autoscaler.tags import NODE_TYPE_LEGACY_HEAD, NODE_TYPE_LEGACY_WORKER
 from ray.autoscaler._private.providers import _PROVIDER_PRETTY_NAMES
@@ -218,6 +219,9 @@ def bootstrap_aws(config):
     # If a LaunchTemplate is provided, extract the necessary fields for the
     # config stages below.
     config = _configure_from_launch_template(config)
+
+    # If `cluster_notifications` is provided, set up a callback for cluster events
+    config = _configure_cluster_event_notifications(config)
 
     # If NetworkInterfaces are provided, extract the necessary fields for the
     # config stages below.
@@ -957,6 +961,78 @@ def _configure_node_cfg_from_launch_template(
     node_cfg.update(lt_data)
 
     return node_cfg
+
+
+def _configure_cluster_event_notifications(
+        config: Dict[str, Any]) -> Dict[str, Any]:
+    """If `cluster_notifications` is provided, an SNS callback handler will be added to
+    cluster creation events. The callback handler will send the event ID and publish
+    a notification to the SNS topic specified at `cluster_notifications.sns_topic_arn`.
+    The SNS topic must be in the same AWS account associated to the autoscaler cluster role.
+
+    Message parameters can be specified in `cluster_notifications.parameters`, which
+    will be included into the payload of each SNS notification.
+
+    Args:
+        config (Dict[str, Any]): config to bootstrap
+
+    Returns:
+        config (Dict[str, Any]): The input config with cluster event notification
+        data merged into the node config of all available node types. If no
+        cluster event notification data is found, then the config is returned
+        unchanged.
+    """
+    # create a copy of the input config to modify
+    config = copy.deepcopy(config)
+    provider = config['provider']
+
+    # TODO: Need a way to generalize this so that users can plug in their own custom callback logic
+    #  or have a dynamic config
+
+    if provider and provider.get('cluster_notifications'):
+        cluster_notifications_map = provider['cluster_notifications']
+        parameters = cluster_notifications_map['parameters']
+        sns_topic_arn = cluster_notifications_map['sns_topic_arn']
+        callback_kwargs = {
+            "sns_topic_arn": sns_topic_arn,
+            "params": parameters,
+        }
+        for i, event_name in enumerate(
+                CreateClusterEvent.__members__.values()):
+            global_event_system.add_callback_handler(
+                event_name, _cluster_event_notifications_callback, snsu,
+                **callback_kwargs)
+    return config
+
+
+def _cluster_event_notifications_callback(
+        sns_client, event_data: Dict[str, Any], **kwargs):
+    """Generic callback for sending Ray cluster setup event data to an SNS topic.
+
+    Args:
+        sns_client: Amazon SNS client for publishing to an SNS topic
+        event_data: Ray cluster setup event data. This contains the event name, enum ID, and
+            may also contain additional metadata (i.e. the initialization or setup command used
+            during this setup step)
+        **kwargs: Keyword arguments that were injected into `_EventSystem.add_callback_handler`
+    """
+    try:
+        # create a copy of the event data to modify
+        event_dict = copy.deepcopy(event_data)
+        event: CreateClusterEvent = event_dict.pop('event_name')
+        sns_topic_arn, params = kwargs['sns_topic_arn'], kwargs['params']
+        message = {
+            **params,
+            "setupEventMetadata": event_dict,
+            "stateSequence": event.value - 1,  # zero-index sequencing
+            "timestamp": round(time.time() * 1000)
+        }
+        sns_client.publish(sns_topic_arn, json.dumps(message))
+        logger.info("Published SNS event {} to {}".format(
+            event.name, sns_topic_arn))
+    except ClientError as exc:
+        cli_logger.abort(
+            "Failed to execute callback for create cluster events", exc)
 
 
 def _configure_from_network_interfaces(config: Dict[str, Any]) \
