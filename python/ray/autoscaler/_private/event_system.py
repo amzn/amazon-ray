@@ -73,9 +73,7 @@ class _EventSystem:
             cli_logger.warning(f"{event} is not currently tracked, and this"
                                " callback will not be invoked.")
 
-        if args is not None or kwargs is not None:
-            callback = functools.partial(callback, *args, **kwargs)
-
+        callback = functools.partial(callback, *args, **kwargs)
         self.callback_map.setdefault(
             event,
             []).extend([callback] if type(callback) is not list else callback)
