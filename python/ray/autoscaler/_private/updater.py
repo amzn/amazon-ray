@@ -291,6 +291,7 @@ class NodeUpdater:
                         time.sleep(READY_CHECK_INTERVAL)
 
     def do_update(self):
+        node_context = NodeContext(self.node_id, self.is_head_node)
         self.provider.set_node_tags(
             self.node_id, {TAG_RAY_NODE_STATUS: STATUS_WAITING_FOR_SSH})
         cli_logger.labeled_value("New status", STATUS_WAITING_FOR_SSH)
@@ -298,7 +299,7 @@ class NodeUpdater:
         deadline = time.time() + AUTOSCALER_NODE_START_WAIT_S
         self.wait_ready(deadline)
         global_event_system.execute_callback(
-            CreateClusterEvent.ssh_control_acquired)
+            CreateClusterEvent.ssh_control_acquired, {"node_context": node_context})
 
         node_tags = self.provider.node_tags(self.node_id)
         logger.debug("Node tags: {}".format(str(node_tags)))
@@ -356,14 +357,16 @@ class NodeUpdater:
                             "Running initialization commands",
                             _numbered=("[]", 4, NUM_SETUP_STEPS)):
                         global_event_system.execute_callback(
-                            CreateClusterEvent.run_initialization_cmd)
+                            CreateClusterEvent.run_initialization_cmd,
+                            {"node_context": node_context})
                         with LogTimer(
                                 self.log_prefix + "Initialization commands",
                                 show_status=True):
                             for cmd in self.initialization_commands:
                                 global_event_system.execute_callback(
                                     CreateClusterEvent.run_initialization_cmd,
-                                    {"command": cmd})
+                                    {"command": cmd,
+                                     "node_context": node_context})
                                 try:
                                     # Overriding the existing SSHOptions class
                                     # with a new SSHOptions class that uses
@@ -402,7 +405,8 @@ class NodeUpdater:
                             # todo: fix command numbering
                             _numbered=("[]", 6, NUM_SETUP_STEPS)):
                         global_event_system.execute_callback(
-                            CreateClusterEvent.run_setup_cmd)
+                            CreateClusterEvent.run_setup_cmd,
+                            {"node_context": node_context})
                         with LogTimer(
                                 self.log_prefix + "Setup commands",
                                 show_status=True):
@@ -411,7 +415,8 @@ class NodeUpdater:
                             for i, cmd in enumerate(self.setup_commands):
                                 global_event_system.execute_callback(
                                     CreateClusterEvent.run_setup_cmd,
-                                    {"command": cmd})
+                                    {"command": cmd,
+                                     "node_context": node_context})
                                 if cli_logger.verbosity == 0 and len(cmd) > 30:
                                     cmd_to_print = cf.bold(cmd[:30]) + "..."
                                 else:
@@ -442,7 +447,8 @@ class NodeUpdater:
                 "Starting the Ray runtime", _numbered=("[]", 7,
                                                        NUM_SETUP_STEPS)):
             global_event_system.execute_callback(
-                CreateClusterEvent.start_ray_runtime)
+                CreateClusterEvent.start_ray_runtime,
+                {"node_context": node_context})
             with LogTimer(
                     self.log_prefix + "Ray start commands", show_status=True):
                 for cmd in self.ray_start_commands:
@@ -474,7 +480,8 @@ class NodeUpdater:
 
                         raise click.ClickException("Start command failed.")
             global_event_system.execute_callback(
-                CreateClusterEvent.start_ray_runtime_completed)
+                CreateClusterEvent.start_ray_runtime_completed,
+                {"node_context": node_context})
 
     def rsync_up(self, source, target, docker_mount_if_possible=False):
         options = {}
@@ -500,3 +507,8 @@ class NodeUpdaterThread(NodeUpdater, Thread):
         Thread.__init__(self)
         NodeUpdater.__init__(self, *args, **kwargs)
         self.exitcode = -1
+
+
+class NodeContext(dict):
+    def __init__(self, node_id: str, is_head_node: bool):
+        dict.__init__(self, node_id=node_id, is_head_node=is_head_node)

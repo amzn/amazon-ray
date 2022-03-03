@@ -38,7 +38,7 @@ from ray.autoscaler.tags import (
     NODE_KIND_WORKER, NODE_KIND_HEAD, TAG_RAY_USER_NODE_TYPE,
     STATUS_UNINITIALIZED, STATUS_UP_TO_DATE, TAG_RAY_NODE_STATUS)
 from ray.autoscaler._private.cli_logger import cli_logger, cf
-from ray.autoscaler._private.updater import NodeUpdaterThread
+from ray.autoscaler._private.updater import NodeUpdaterThread, NodeContext
 from ray.autoscaler._private.command_runner import set_using_login_shells, \
     set_rsync_silent
 from ray.autoscaler._private.event_system import (CreateClusterEvent,
@@ -648,7 +648,8 @@ def get_or_create_head_node(config: Dict[str, Any],
                     time.sleep(POLL_INTERVAL)
             cli_logger.newline()
 
-    global_event_system.execute_callback(CreateClusterEvent.head_node_acquired)
+    global_event_system.execute_callback(CreateClusterEvent.head_node_acquired,
+                                         {"node_context": NodeContext(head_node, True)})
 
     with cli_logger.group(
             "Setting up head node",
@@ -726,9 +727,7 @@ def get_or_create_head_node(config: Dict[str, Any],
             sys.exit(1)
 
     global_event_system.execute_callback(
-        CreateClusterEvent.cluster_booting_completed, {
-            "head_node_id": head_node,
-        })
+        CreateClusterEvent.cluster_booting_completed, {"node_context": NodeContext(head_node, True)})
 
     monitor_str = "tail -n 100 -f /tmp/ray/session_latest/logs/monitor*"
     if override_cluster_name:
