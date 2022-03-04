@@ -52,11 +52,11 @@ provider:
 
 head_node:
   InstanceType: r5n.xlarge
-  ImageId: ami-0a4da390e7a168bb9
+  ImageId: ami-0ec076d1d4cf24740
 
 worker_nodes:
   InstanceType: r5n.2xlarge
-  ImageId: ami-0a4da390e7a168bb9
+  ImageId: ami-0ec076d1d4cf24740
 
 # explicitly remove setup commands to keep the pre-installed version of ray
 setup_commands: []
