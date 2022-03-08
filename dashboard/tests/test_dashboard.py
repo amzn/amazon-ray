@@ -18,22 +18,22 @@ import redis
 import requests
 
 from ray import ray_constants
-from ray.test_utils import (format_web_url, wait_for_condition,
-                            wait_until_server_available, run_string_as_driver,
-                            wait_until_succeeded_without_exception)
+from ray._private.test_utils import (
+    format_web_url, wait_for_condition, wait_until_server_available,
+    run_string_as_driver, wait_until_succeeded_without_exception)
 from ray.autoscaler._private.util import (DEBUG_AUTOSCALING_STATUS_LEGACY,
                                           DEBUG_AUTOSCALING_ERROR)
-from ray.new_dashboard import dashboard
-import ray.new_dashboard.consts as dashboard_consts
-import ray.new_dashboard.utils as dashboard_utils
-import ray.new_dashboard.modules
+from ray.dashboard import dashboard
+import ray.dashboard.consts as dashboard_consts
+import ray.dashboard.utils as dashboard_utils
+import ray.dashboard.modules
 
 logger = logging.getLogger(__name__)
 routes = dashboard_utils.ClassMethodRouteTable
 
 
 def cleanup_test_files():
-    module_path = ray.new_dashboard.modules.__path__[0]
+    module_path = ray.dashboard.modules.__path__[0]
     filename = os.path.join(module_path, "test_for_bad_import.py")
     logger.info("Remove test file: %s", filename)
     try:
@@ -43,7 +43,7 @@ def cleanup_test_files():
 
 
 def prepare_test_files():
-    module_path = ray.new_dashboard.modules.__path__[0]
+    module_path = ray.dashboard.modules.__path__[0]
     filename = os.path.join(module_path, "test_for_bad_import.py")
     logger.info("Prepare test file: %s", filename)
     with open(filename, "w") as f:
@@ -75,6 +75,8 @@ def test_basic(ray_start_with_dashboard):
         host=address[0],
         port=int(address[1]),
         password=ray_constants.REDIS_DEFAULT_PASSWORD)
+    gcs_client = ray._private.gcs_utils.GcsClient.create_from_redis(client)
+    ray.experimental.internal_kv._initialize_internal_kv(gcs_client)
 
     all_processes = ray.worker._global_node.all_processes
     assert ray_constants.PROCESS_TYPE_DASHBOARD in all_processes
@@ -92,7 +94,7 @@ def test_basic(ray_start_with_dashboard):
         for p in processes:
             try:
                 for c in p.cmdline():
-                    if "new_dashboard/agent.py" in c:
+                    if os.path.join("dashboard", "agent.py") in c:
                         return p
             except Exception:
                 pass
@@ -107,7 +109,7 @@ def test_basic(ray_start_with_dashboard):
         agent_proc.kill()
         agent_proc.wait()
         # The agent will be restarted for imports failure.
-        for x in range(50):
+        for _ in range(300):
             agent_proc = _search_agent(raylet_proc.children())
             if agent_proc:
                 agent_pids.add(agent_proc.pid)
@@ -147,13 +149,17 @@ def test_basic(ray_start_with_dashboard):
 
     # Check redis keys are set.
     logger.info("Check redis keys are set.")
-    dashboard_address = client.get(ray_constants.REDIS_KEY_DASHBOARD)
+    dashboard_address = ray.experimental.internal_kv._internal_kv_get(
+        ray_constants.REDIS_KEY_DASHBOARD,
+        namespace=ray_constants.KV_NAMESPACE_DASHBOARD)
     assert dashboard_address is not None
-    dashboard_rpc_address = client.get(
-        dashboard_consts.REDIS_KEY_DASHBOARD_RPC)
+    dashboard_rpc_address = ray.experimental.internal_kv._internal_kv_get(
+        dashboard_consts.REDIS_KEY_DASHBOARD_RPC,
+        namespace=ray_constants.KV_NAMESPACE_DASHBOARD)
     assert dashboard_rpc_address is not None
     key = f"{dashboard_consts.DASHBOARD_AGENT_PORT_PREFIX}{node_id}"
-    agent_ports = client.get(key)
+    agent_ports = ray.experimental.internal_kv._internal_kv_get(
+        key, namespace=ray_constants.KV_NAMESPACE_DASHBOARD)
     assert agent_ports is not None
 
 
@@ -320,6 +326,22 @@ def test_async_loop_forever():
     loop.run_forever()
     assert counter[0] > 2
 
+    counter2 = [0]
+    task = None
+
+    @dashboard_utils.async_loop_forever(interval_seconds=0.1, cancellable=True)
+    async def bar():
+        nonlocal task
+        counter2[0] += 1
+        if counter2[0] > 2:
+            task.cancel()
+
+    loop = asyncio.new_event_loop()
+    task = loop.create_task(bar())
+    with pytest.raises(asyncio.CancelledError):
+        loop.run_until_complete(task)
+    assert counter2[0] == 3
+
 
 def test_dashboard_module_decorator(enable_test_module):
     head_cls_list = dashboard_utils.get_all_modules(
@@ -332,7 +354,7 @@ def test_dashboard_module_decorator(enable_test_module):
 
     test_code = """
 import os
-import ray.new_dashboard.utils as dashboard_utils
+import ray.dashboard.utils as dashboard_utils
 
 os.environ.pop("RAY_DASHBOARD_MODULE_TEST")
 head_cls_list = dashboard_utils.get_all_modules(
@@ -436,7 +458,6 @@ def test_get_cluster_status(ray_start_with_dashboard):
         print(response.json())
         assert response.json()["result"]
         assert "autoscalingStatus" in response.json()["data"]
-        assert response.json()["data"]["autoscalingStatus"] is None
         assert "autoscalingError" in response.json()["data"]
         assert response.json()["data"]["autoscalingError"] is None
         assert "clusterStatus" in response.json()["data"]
@@ -455,9 +476,12 @@ def test_get_cluster_status(ray_start_with_dashboard):
         host=address[0],
         port=int(address[1]),
         password=ray_constants.REDIS_DEFAULT_PASSWORD)
-
-    client.hset(DEBUG_AUTOSCALING_STATUS_LEGACY, "value", "hello")
-    client.hset(DEBUG_AUTOSCALING_ERROR, "value", "world")
+    gcs_client = ray._private.gcs_utils.GcsClient.create_from_redis(client)
+    ray.experimental.internal_kv._initialize_internal_kv(gcs_client)
+    ray.experimental.internal_kv._internal_kv_put(
+        DEBUG_AUTOSCALING_STATUS_LEGACY, "hello")
+    ray.experimental.internal_kv._internal_kv_put(DEBUG_AUTOSCALING_ERROR,
+                                                  "world")
 
     response = requests.get(f"{webui_url}/api/cluster_status")
     response.raise_for_status()
@@ -591,7 +615,8 @@ def test_dashboard_port_conflict(ray_start_with_dashboard):
         host=address[0],
         port=int(address[1]),
         password=ray_constants.REDIS_DEFAULT_PASSWORD)
-
+    gcs_client = ray._private.gcs_utils.GcsClient.create_from_redis(client)
+    ray.experimental.internal_kv._initialize_internal_kv(gcs_client)
     host, port = address_info["webui_url"].split(":")
     temp_dir = "/tmp/ray"
     log_dir = "/tmp/ray/session_latest/logs"
@@ -613,7 +638,9 @@ def test_dashboard_port_conflict(ray_start_with_dashboard):
     while True:
         time.sleep(1)
         try:
-            dashboard_url = client.get(ray_constants.REDIS_KEY_DASHBOARD)
+            dashboard_url = ray.experimental.internal_kv._internal_kv_get(
+                ray_constants.REDIS_KEY_DASHBOARD,
+                namespace=ray_constants.KV_NAMESPACE_DASHBOARD)
             if dashboard_url:
                 new_port = int(dashboard_url.split(b":")[-1])
                 assert new_port > int(port)
@@ -623,6 +650,26 @@ def test_dashboard_port_conflict(ray_start_with_dashboard):
         finally:
             if time.time() > start_time + timeout_seconds:
                 raise Exception("Timed out while testing.")
+
+
+def test_gcs_check_alive(fast_gcs_failure_detection, ray_start_with_dashboard):
+    assert (wait_until_server_available(ray_start_with_dashboard["webui_url"])
+            is True)
+
+    all_processes = ray.worker._global_node.all_processes
+    dashboard_info = all_processes[ray_constants.PROCESS_TYPE_DASHBOARD][0]
+    dashboard_proc = psutil.Process(dashboard_info.process.pid)
+    gcs_server_info = all_processes[ray_constants.PROCESS_TYPE_GCS_SERVER][0]
+    gcs_server_proc = psutil.Process(gcs_server_info.process.pid)
+
+    assert dashboard_proc.status() in [
+        psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING, psutil.STATUS_DISK_SLEEP
+    ]
+
+    gcs_server_proc.kill()
+    gcs_server_proc.wait()
+    # The dashboard exits by os._exit(-1)
+    assert dashboard_proc.wait(10) == 255
 
 
 if __name__ == "__main__":

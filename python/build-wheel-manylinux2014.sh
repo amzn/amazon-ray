@@ -25,6 +25,11 @@ NUMPY_VERSIONS=("1.14.5"
 yum -y install unzip zip sudo
 yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel xz
 yum -y install openssl
+yum install libasan-4.8.5-44.el7.x86_64 -y
+yum install libubsan-7.3.1-5.10.el7.x86_64 -y
+yum install devtoolset-8-libasan-devel.x86_64 -y
+
+
 
 java -version
 java_bin=$(readlink -f "$(command -v java)")
@@ -32,9 +37,9 @@ echo "java_bin path $java_bin"
 java_home=${java_bin%jre/bin/java}
 export JAVA_HOME="$java_home"
 
-# Put bazel into the PATH if building Bazel from source
-export PATH=/root/bazel-3.2.0/output:$PATH:/root/bin
 /ray/ci/travis/install-bazel.sh
+# Put bazel into the PATH if building Bazel from source
+# export PATH=/root/bazel-3.2.0/output:$PATH:/root/bin
 
 # If converting down to manylinux2010, the following configuration should
 # be set for bazel
@@ -55,10 +60,7 @@ nvm use "$NODE_VERSION"
 
 # Build the dashboard so its static assets can be included in the wheel.
 # TODO(mfitton): switch this back when deleting old dashboard code.
-pushd python/ray/new_dashboard/client
-  # Python >= 3.5.0 is required to successfully rebuild node-gyp.
-  echo "Setting npm config python path to /opt/python/${PYTHONS[0]}/bin/python"
-  npm config set python "/opt/python/${PYTHONS[0]}/bin/python"
+pushd python/ray/dashboard/client
   npm ci
   npm run build
 popd
@@ -73,7 +75,7 @@ for ((i=0; i<${#PYTHONS[@]}; ++i)); do
   # The -d flag removes directories. The -x flag ignores the .gitignore file,
   # and the -e flag ensures that we don't remove the .whl directory, the
   # dashboard directory and jars directory.
-  git clean -f -f -x -d -e .whl -e python/ray/new_dashboard/client -e dashboard/client -e python/ray/jars
+  git clean -f -f -x -d -e .whl -e python/ray/dashboard/client -e dashboard/client -e python/ray/jars
 
   pushd python
     # Fix the numpy version because this will be the oldest numpy version we can
@@ -87,8 +89,12 @@ for ((i=0; i<${#PYTHONS[@]}; ++i)); do
       exit 1
     fi
 
+    # build ray wheel
     PATH=/opt/python/${PYTHON}/bin:/root/bazel-3.2.0/output:$PATH \
     /opt/python/"${PYTHON}"/bin/python setup.py bdist_wheel
+    # build ray-cpp wheel
+    PATH=/opt/python/${PYTHON}/bin:/root/bazel-3.2.0/output:$PATH \
+    RAY_INSTALL_CPP=1 /opt/python/"${PYTHON}"/bin/python setup.py bdist_wheel
     # In the future, run auditwheel here.
     mv dist/*.whl ../.whl/
   popd

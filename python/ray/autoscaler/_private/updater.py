@@ -46,7 +46,7 @@ class NodeUpdater:
         rsync_options: Extra options related to the rsync command.
         process_runner: the module to use to run the commands
             in the CommandRunner. E.g., subprocess.
-        use_internal_ip: Wwhether the node_id belongs to an internal ip
+        use_internal_ip: Whether the node_id belongs to an internal ip
             or external ip.
         docker_config: Docker section of autoscaler yaml
         restart_only: Whether to skip setup commands & just restart ray
@@ -303,6 +303,13 @@ class NodeUpdater:
 
         node_tags = self.provider.node_tags(self.node_id)
         logger.debug("Node tags: {}".format(str(node_tags)))
+
+        if self.provider_type == "aws" and self.provider.provider_config:
+            from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper \
+                import CloudwatchHelper
+            CloudwatchHelper(self.provider.provider_config,
+                             self.node_id, self.provider.cluster_name). \
+                update_from_config(self.is_head_node)
 
         if node_tags.get(TAG_RAY_RUNTIME_CONFIG) == self.runtime_hash:
             # When resuming from a stopped instance the runtime_hash may be the

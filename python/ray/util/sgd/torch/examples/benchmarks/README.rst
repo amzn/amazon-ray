@@ -93,7 +93,7 @@ Simple Instructions
 
 Note that these instructions are not maintained and may require a bit of wrangling to get working.
 
-First, ``git clone https://github.com/ray-project/ray && cd ray/python/ray/util/sgd/torch/examples/``.
+First, ``git clone https://github.com/amzn/amazon-ray && cd ray/python/ray/util/sgd/torch/examples/``.
 
 You can use ``sgd-development.yaml`` to setup your cluster configuration and ``ray up sgd-development.yaml`` to launch the cluster.
 

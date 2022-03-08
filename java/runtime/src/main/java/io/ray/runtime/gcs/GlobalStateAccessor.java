@@ -92,10 +92,10 @@ public class GlobalStateAccessor {
     }
   }
 
-  public byte[] getPlacementGroupInfo(String name, boolean global) {
+  public byte[] getPlacementGroupInfo(String name, String namespace) {
     synchronized (GlobalStateAccessor.class) {
       validateGlobalStateAccessorPointer();
-      return nativeGetPlacementGroupInfoByName(globalStateAccessorNativePointer, name, global);
+      return nativeGetPlacementGroupInfoByName(globalStateAccessorNativePointer, name, namespace);
     }
   }
 
@@ -103,6 +103,13 @@ public class GlobalStateAccessor {
     synchronized (GlobalStateAccessor.class) {
       validateGlobalStateAccessorPointer();
       return this.nativeGetAllPlacementGroupInfo(globalStateAccessorNativePointer);
+    }
+  }
+
+  public byte[] getInternalKV(String k) {
+    synchronized (GlobalStateAccessor.class) {
+      validateGlobalStateAccessorPointer();
+      return this.nativeGetInternalKV(globalStateAccessorNativePointer, k);
     }
   }
 
@@ -164,9 +171,11 @@ public class GlobalStateAccessor {
   private native byte[] nativeGetPlacementGroupInfo(long nativePtr, byte[] placementGroupId);
 
   private native byte[] nativeGetPlacementGroupInfoByName(
-      long nativePtr, String name, boolean global);
+      long nativePtr, String name, String namespace);
 
   private native List<byte[]> nativeGetAllPlacementGroupInfo(long nativePtr);
+
+  private native byte[] nativeGetInternalKV(long nativePtr, String k);
 
   private native byte[] nativeGetNodeToConnectForDriver(long nativePtr, String nodeIpAddress);
 }

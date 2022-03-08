@@ -167,7 +167,7 @@ def current_ray_pip_specifier() -> Optional[str]:
 
     Examples:
         Returns "ray[all]==1.4.0" if running the stable release
-        Returns "https://s3-us-west-2.amazonaws.com/ray-wheels/master/[..].whl"
+        Returns "http://d168575n8y1h5x.cloudfront.net/main/[..].whl"
             if running the nightly or a specific commit
     """
     if os.environ.get("RAY_CI_POST_WHEEL_TESTS"):

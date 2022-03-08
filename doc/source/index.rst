@@ -1,8 +1,6 @@
 What is Ray?
 ============
 
-.. tip:: Please take 5 minutes to take the `Ray Pulse Community Survey <https://www.surveymonkey.com/r/ray-community-pulse-2021>`_!
-
 .. include:: ray-overview/basics.rst
 
 Getting Started with Ray
@@ -114,36 +112,33 @@ Ray provides Python, Java, and *EXPERIMENTAL* C++ API. And Ray uses Tasks (funct
           }
         }
 
-  .. group-tab:: C++ (EXPERIMENTAL)
+  .. group-tab:: C++
 
     | The C++ Ray API is currently experimental with limited support. You can track its development `here <https://github.com/ray-project/ray/milestone/17>`__ and report issues on GitHub.
     | Run the following commands to get started:
-    | - Build ray from source with *bazel* as shown `here <https://docs.ray.io/en/master/development.html#building-ray-full>`__.
-    | - Modify and build `cpp/example/example.cc`.
+
+    | - Install ray with C++ API support and generate a bazel project with the ray command.
 
     .. code-block:: shell
 
-      pip install -e python --verbose
-      cd cpp/example/
-      bazel build //:example
+      pip install "ray[cpp]"
+      mkdir ray-template && ray cpp --generate-bazel-project-template-to ray-template
 
-    | Option 1: run the example directly with a dynamic library path. It will start a Ray cluster automatically.
-
-    .. code-block:: shell
-
-      ray stop
-      ./bazel-bin/example --ray-dynamic-library-path=bazel-bin/example.so
-
-    | Option 2: connect to an existing Ray cluster with a known redis address (e.g. `127.0.0.1:6379`).
+    | - The project template comes with a simple example application. You can try this example out in 2 ways:
+    | - 1. Run the example application directly, which will start a Ray cluster locally.
 
     .. code-block:: shell
 
-      ray stop
+      cd ray-template && bash run.sh
+
+    | - 2. Connect the example application to an existing Ray cluster by specifying the RAY_ADDRESS env var.
+
+    .. code-block:: shell
+
       ray start --head
-      ./bazel-bin/example --ray-dynamic-library-path=bazel-bin/example.so --ray-address=127.0.0.1:6379
+      RAY_ADDRESS=127.0.0.1:6379 bash run.sh
 
-    .. literalinclude:: ../../cpp/example/example.cc
-       :language: cpp
+    | - Now you can build your own Ray C++ application based on this project template.
 
 You can also get started by visiting our `Tutorials <https://github.com/ray-project/tutorial>`_. For the latest wheels (nightlies), see the `installation page <installation.html>`__.
 
@@ -186,6 +181,7 @@ Blog and Press
 Talks (Videos)
 --------------
 
+ - `Unifying Large Scale Data Preprocessing and Machine Learning Pipelines with Ray Datasets | PyData 2021 <https://zoom.us/rec/share/0cjbk_YdCTbiTm7gNhzSeNxxTCCEy1pCDUkkjfBjtvOsKGA8XmDOx82jflHdQCUP.fsjQkj5PWSYplOTz?startTime=1635456658000>`_ `(slides) <https://docs.google.com/presentation/d/19F_wxkpo1JAROPxULmJHYZd3sKryapkbMd0ib3ndMiU/edit?usp=sharing>`_
  - `Programming at any Scale with Ray | SF Python Meetup Sept 2019 <https://www.youtube.com/watch?v=LfpHyIXBhlE>`_
  - `Ray for Reinforcement Learning | Data Council 2019 <https://www.youtube.com/watch?v=Ayc0ca150HI>`_
  - `Scaling Interactive Pandas Workflows with Modin <https://www.youtube.com/watch?v=-HjLd_3ahCw>`_
@@ -240,6 +236,7 @@ Papers
 
    walkthrough.rst
    using-ray.rst
+   Ray Job Submission <ray-job-submission/overview.rst>
    configure.rst
    ray-dashboard.rst
    Tutorial and Examples <auto_examples/overview.rst>
@@ -270,11 +267,41 @@ Papers
    serve/http-servehandle.rst
    serve/deployment.rst
    serve/ml-models.rst
+   serve/pipeline.rst
    serve/performance.rst
    serve/architecture.rst
    serve/tutorials/index.rst
    serve/faq.rst
    serve/package-ref.rst
+
+.. toctree::
+   :hidden:
+   :maxdepth: -1
+   :caption: Ray Data
+
+   data/dataset.rst
+   data/dataset-pipeline.rst
+   data/dataset-ml-preprocessing.rst
+   data/dataset-tensor-support.rst
+   data/package-ref.rst
+   data/dask-on-ray.rst
+   data/mars-on-ray.rst
+   data/modin/index.rst
+   data/raydp.rst
+
+.. toctree::
+   :hidden:
+   :maxdepth: -1
+   :caption: Ray Workflows
+
+   workflows/concepts.rst
+   workflows/basics.rst
+   workflows/management.rst
+   workflows/actors.rst
+   workflows/events.rst
+   workflows/comparison.rst
+   workflows/advanced.rst
+   workflows/package-ref.rst
 
 .. toctree::
    :hidden:
@@ -292,10 +319,11 @@ Papers
 .. toctree::
    :hidden:
    :maxdepth: -1
-   :caption: RLlib
+   :caption: Ray RLlib
 
-   rllib.rst
+   rllib/index.rst
    rllib-toc.rst
+   rllib/core-concepts.rst
    rllib-training.rst
    rllib-env.rst
    rllib-models.rst
@@ -310,25 +338,15 @@ Papers
 .. toctree::
    :hidden:
    :maxdepth: -1
-   :caption: Ray SGD
+   :caption: Ray Train
 
-   raysgd/raysgd.rst
-   raysgd/raysgd_pytorch.rst
-   raysgd/raysgd_tensorflow.rst
-   raysgd/raysgd_dataset.rst
-   raysgd/raysgd_ptl.rst
-   raysgd/raysgd_tune.rst
-   raysgd/raysgd_ref.rst
-
-.. toctree::
-   :hidden:
-   :maxdepth: -1
-   :caption: Data Processing
-
-   modin/index.rst
-   dask-on-ray.rst
-   mars-on-ray.rst
-   raydp.rst
+   train/train.rst
+   train/user_guide.rst
+   train/examples.rst
+   train/architecture.rst
+   train/api.rst
+   train/migration-guide.rst
+   RaySGD v1: Distributed Training Wrappers <raysgd/raysgd.rst>
 
 .. toctree::
    :hidden:
@@ -337,14 +355,15 @@ Papers
 
    multiprocessing.rst
    joblib.rst
-   iter.rst
    xgboost-ray.rst
+   lightgbm-ray.rst
+   ray-lightning.rst
    ray-collective.rst
 
 .. toctree::
    :hidden:
    :maxdepth: -1
-   :caption: Ray Observability
+   :caption: Observability
 
    ray-metrics.rst
    ray-debugging.rst
@@ -354,17 +373,11 @@ Papers
 .. toctree::
    :hidden:
    :maxdepth: -1
-   :caption: Contributing
+   :caption: Contributor Guide
 
    getting-involved.rst
-
-.. toctree::
-   :hidden:
-   :maxdepth: -1
-   :caption: Development and Ray Internals
-
    development.rst
+   fake-autoscaler.rst
    whitepaper.rst
    debugging.rst
    profiling.rst
-   fault-tolerance.rst

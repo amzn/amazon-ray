@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict
 import os
 import sys
@@ -9,7 +10,8 @@ import ray
 import ray._private.utils
 import ray.cloudpickle as cloudpickle
 from ray.tune.utils.util import wait_for_gpu
-from ray.tune.utils.util import unflatten_dict, unflatten_list_dict
+from ray.tune.utils.util import (flatten_dict, unflatten_dict,
+                                 unflatten_list_dict)
 from ray.tune.utils.trainable import TrainableUtil
 
 
@@ -34,8 +36,10 @@ class TrainableUtilTest(unittest.TestCase):
         ray.init(local_mode=True)
         ray.tune.run(tune_one, local_dir=self.checkpoint_dir, name=name)
 
-        a = ray.tune.Analysis(
-            os.path.join(self.checkpoint_dir, name), "score", "max")
+        a = ray.tune.ExperimentAnalysis(
+            os.path.join(self.checkpoint_dir, name),
+            default_metric="score",
+            default_mode="max")
         df = a.dataframe()
         checkpoint_dir = a.get_best_checkpoint(df["logdir"].iloc[0])
         assert checkpoint_dir.endswith("/checkpoint_000001/")
@@ -68,6 +72,44 @@ class TrainableUtilTest(unittest.TestCase):
         for i in range(5):
             path = os.path.join(self.checkpoint_dir, str(i))
             self.assertEquals(loaded["data"][str(i)], open(path, "rb").read())
+
+
+class FlattenDictTest(unittest.TestCase):
+    def test_output_type(self):
+        in_ = OrderedDict({"a": {"b": 1}, "c": {"d": 2}, "e": 3})
+        out = flatten_dict(in_)
+        assert type(in_) is type(out)
+
+    def test_one_level_nested(self):
+        ori_in = OrderedDict({"a": {"b": 1}, "c": {"d": 2}, "e": 3})
+        in_ = copy.deepcopy(ori_in)
+        result = flatten_dict(in_)
+        assert in_ == ori_in
+        assert result == {"a/b": 1, "c/d": 2, "e": 3}
+
+    def test_multi_level_nested(self):
+        ori_in = OrderedDict({
+            "a": {
+                "b": {
+                    "c": {
+                        "d": 1,
+                    },
+                },
+            },
+            "b": {
+                "c": {
+                    "d": 2,
+                },
+            },
+            "c": {
+                "d": 3,
+            },
+            "e": 4,
+        })
+        in_ = copy.deepcopy(ori_in)
+        result = flatten_dict(in_)
+        assert in_ == ori_in
+        assert result == {"a/b/c/d": 1, "b/c/d": 2, "c/d": 3, "e": 4}
 
 
 class UnflattenDictTest(unittest.TestCase):
@@ -135,6 +177,14 @@ class UnflattenDictTest(unittest.TestCase):
             "2": 6
         })
         assert result == [{"a": [{"b": 1}, 2]}, [3, 4, {"c": 5}], 6]
+
+    def test_raises_error_on_key_conflict(self):
+        """Ensure that an informative exception is raised on key conflict."""
+        with self.assertRaisesRegex(TypeError, r"Cannot unflatten dict"):
+            unflatten_dict({"a": 1, "a/b": 2, "a/c": 3})
+
+        with self.assertRaisesRegex(TypeError, r"Cannot unflatten dict"):
+            unflatten_dict({"a/b": 2, "a/b/c": 3})
 
 
 class GPUUtilMock:

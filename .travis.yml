@@ -10,6 +10,7 @@ git:
 branches:
   except:
     - /dependabot.*/
+    - main
 
 before_install:
   - unset -f cd  # Travis defines this on Mac for RVM, but it breaks the Mac build
@@ -20,7 +21,7 @@ before_install:
     if [ false != "${TRAVIS_PULL_REQUEST-}" ]; then to_fetch+=("+refs/pull/${TRAVIS_PULL_REQUEST}/merge:"); fi
     git fetch -q -- origin "${to_fetch[@]}"
     git checkout -qf "${TRAVIS_COMMIT}" --
-    python -u ci/remote-watch.py --skip_repo=ray-project/ray &
+    python -u ci/remote-watch.py --skip_repo=amzn/amazon-ray &
 
 matrix:
   include:
@@ -50,10 +51,6 @@ after_script:
 deploy:
   - provider: s3
     edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
     bucket: ray-wheels
     acl: public_read
     region: us-west-2
@@ -61,16 +58,12 @@ deploy:
     upload-dir: "$TRAVIS_BRANCH/$TRAVIS_COMMIT"
     skip_cleanup: true
     on:
-      repo: ray-project/ray
+      repo: amzn/amazon-ray
       all_branches: true
       condition: $MAC_WHEELS = 1
 
   - provider: s3
     edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
     bucket: ray-wheels
     acl: public_read
     region: us-west-2
@@ -79,16 +72,12 @@ deploy:
     skip_cleanup: true
     on:
       branch: master
-      repo: ray-project/ray
+      repo: amzn/amazon-ray
       condition: $MAC_WHEELS = 1
 
   # Upload jars so that we can debug locally for every commit
   - provider: s3
     edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
     bucket: ray-wheels
     acl: public_read
     region: us-west-2
@@ -96,16 +85,12 @@ deploy:
     upload-dir: "jars/$TRAVIS_BRANCH/$TRAVIS_COMMIT"
     skip_cleanup: true
     on:
-      repo: ray-project/ray
+      repo: amzn/amazon-ray
       all_branches: true
       condition: $MAC_JARS = 1
 
   - provider: s3
     edge: true # This supposedly opts in to deploy v2.
-    access_key_id:
-      secure: QRaZjAn4QC95GwlqEEUIoU+qXoyM5Qt8tyCymztwdkn5HkZ8fd8MeMlLuWXnXr4cZlQNe4GtO9FiYsKyqEfDoDgmIN/UWr7gBBRrufzMFU001yNsAPKx55fVi7Ap7rnhjrPjUNdIZCIIw4J8gbDe1wgDZBm9tM0uAdi/hTBItlbhkgR5snsCbdEldmLx+oWKvnIuWZO9BGXL64ick0LicP+SlJmMmILlLCIrIi95UZ1sqr7Uh0UDHjt5qVOCLNWIiIe0643Ek/pb1BPweYVThwIGLALV3DqcSHFsA7lDXbTRG5kfnI5iWZ7Slt8ScsjUmunEaOxqG8yHJ3L3HYCeBcu7Z/S227CYJCHIdxzILkUhI6B1VLXO6oozE+8Bjodc4AIvo+WQ+xhm6A4WDBsVOMqUvLfpUinRGywfTFFcDvNljhks7kUBkvjJwFvgCThuSkgZBfcQwuEaygWBfPrZYADKz9EiuLcmfYah1xWpadpmez7RZP/HOyAJSIkv+cRAr/YaGiTUZTfVzMHZYBKoz4B856/sgm7VZWq0zL7aV9VtO/GNkA+D5B1BFliPjEXluGfOAOurfK4CSEi1z+mQfIJJ4JUZv2wmzkY5f7YcH/awxfKosv0g3/xAYN19HcrVan7RDcP5WJLuCWDjCJwNZh3nPgGrmLtoc2sVoEO0yZY=
-    secret_access_key:
-      secure: WmpFyE9sFZmT5aoIZSUN0IQTJHjmNhaAkKddERMBqfbu27aLmnbNQgjrtCAoaFmwie5UOUKuQMUoXClM0cLWX7HCbnD7SuidWuLE0goiTs6qYMJQIqcZh9RRzu5HN+vrqGz4BvnbpgEc0b1Tix7Dym5ME0O24HXqieRCi/mja8BNtqDkP/vHXPdE2KbeNZjgOdM3mh1ntGX+iN0zdRdYFq54pyA3Eo7QXKDh7HgmRgRFiJnfg1AeeZ0dz1OkYTdexMzBCDD+UPKNopbCP9hodudH1xNtpg6AC6STZnNmSIBjjdcgNfKv2k+noYiFTtbPthQTTOFhFN7q24sTGgaZWh2u4e2rf1u9RUvjp0PeS5xX9QO65GQH4hRnhHE74Z1GVUhxErGX7w5M06n+ofsw11i1feNkWLDVUDdxtJx0bMCmCImiBobNpDap8Bp8MdeLM6nvoCgRWFC1IlU8MiZt8ostq391QAZYQqFSnyaHrxBHbF4/M++lYmKu3Jhvf64+obN7AnPySemIlmrEV04qHW34cKtOfD4qyUNe3ogmseRDHFygcom1OJ/wlcNEVFog9EwAZcUU6ZiibWMb+wlSebN1DpyxyXB4w1PstIMGXGstEaLpQGalFp1vYH5K0cjeexiT6R5XN1qpGjfbLWgS+rAjK+k4IGoFBu1moi79gx8=
     bucket: ray-wheels
     acl: public_read
     region: us-west-2
@@ -113,6 +98,6 @@ deploy:
     upload-dir: "jars/latest"
     skip_cleanup: true
     on:
-      repo: ray-project/ray
+      repo: amzn/amazon-ray
       branch: master
       condition: $MAC_JARS = 1

@@ -1,321 +1,238 @@
 [
    {
-      "type":"metric",
-      "x":0,
-      "y":0,
+      "type":"explorer",
+      "x":12,
+      "y":18,
       "width":12,
       "height":6,
-      "properties":{
-         "view":"timeSeries",
-         "metrics":[
-            [
-               "CWAgent",
-               "cpu_usage_system",
-               "InstanceId",
-               "{instance_id}",
-               "cpu",
-               "cpu-total"
-            ],
-            [
-               ".",
-               "usage_active",
-               ".",
-               ".",
-               ".",
-               "."
-            ],
-            [
-               ".",
-               "usage_user",
-               ".",
-               ".",
-               ".",
-               "."
-            ],
-            [
-               ".",
-               "usage_idle",
-               ".",
-               ".",
-               ".",
-               "."
-            ]
-         ],
-         "region":"{region}",
-         "stat":"Average",
-         "period":60,
-         "title":"CPU Usage",
-         "yAxis":{
-            "left":{
-               "min":0,
-               "max":100
+      "properties": {
+        "metrics": [
+           {
+              "metricName": "CPUUtilization",
+              "resourceType": "AWS::EC2::Instance",
+              "stat": "Average"
+           }
+        ],
+        "aggregateBy": {
+                    "key": "*",
+                    "func": "SUM"
+        },
+        "labels": [
+            {
+                "key": "cloudwatch-agent-installed",
+                "value": "True"
+            },
+            {
+                "key": "ray-cluster-name",
+                "value": "{cluster_name}"
             }
-         }
+        ],
+        "widgetOptions": {
+            "legend": {
+                "position": "bottom"
+            },
+            "view": "timeSeries",
+            "stacked": false,
+            "rowsPerPage": 1,
+            "widgetsPerRow": 1
+        },
+        "title":"Cluster CPU Utilization"
+      }
+   },
+   {
+      "type":"explorer",
+      "x":0,
+      "y":18,
+      "width":12,
+      "height":6,
+      "properties": {
+        "metrics": [
+           {
+              "metricName": "CPUUtilization",
+              "resourceType": "AWS::EC2::Instance",
+              "stat": "Average"
+           }
+        ],
+        "aggregateBy": {
+              "key": "*",
+              "func": "AVG"
+        },
+        "labels": [
+            {
+                "key": "cloudwatch-agent-installed",
+                "value": "True"
+            },
+            {
+                "key": "ray-cluster-name",
+                "value": "{cluster_name}"
+            }
+        ],
+        "widgetOptions": {
+            "legend": {
+                "position": "bottom"
+            },
+            "view": "timeSeries",
+            "stacked": false,
+            "rowsPerPage": 1,
+            "widgetsPerRow": 1
+        },
+        "title":"Single Node CPU Utilization (Avg and Max)"
       }
    },
    {
       "type":"metric",
       "x":12,
-      "y":0,
+      "y":6,
       "width":12,
       "height":6,
       "properties":{
          "view":"timeSeries",
          "metrics":[
-            [
-               "CWAgent",
-               "cpu_time_system",
-               "InstanceId",
-               "{instance_id}",
-               "cpu",
-               "cpu-total"
-            ],
-            [
-               ".",
-               "cpu_time_active",
-               ".",
-               ".",
-               ".",
-               "."
-            ],
-            [
-               ".",
-               "cpu_time_user",
-               ".",
-               ".",
-               ".",
-               "."
-            ],
-            [
-               ".",
-               "cpu_time_idle",
-               ".",
-               ".",
-               ".",
-               "."
-            ]
+            [ { "expression": "SUM(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} processes_running', 'Average', 300))", "label": "cluster running process sum", "id": "e1" } ],
+            [ { "expression": "SUM(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} processes_sleeping', 'Average', 300))", "label": "cluster sleeping process sum", "id": "e2" } ]
          ],
          "region":"{region}",
          "stat":"Average",
          "period":60,
-         "title":"CPU Time Usage",
-         "yAxis":{
-            "left":{
-               "min":0,
-               "max":100
-            }
-         }
+         "title":"Cluster Processes"
       }
    },
    {
       "type":"metric",
       "x":0,
-      "y":18,
+      "y":6,
       "width":12,
       "height":6,
       "properties":{
          "view":"timeSeries",
          "metrics":[
-            [
-               "CWAgent",
-               "processes_running",
-               "InstanceId",
-               "{instance_id}",
-               {
-                  "label":"Runnng",
-                  "color":"#4b74bd"
-               }
-            ],
-            [
-               ".",
-               "processes_sleeping",
-               ".",
-               ".",
-               {
-                  "label":"Sleeping",
-                  "color":"#69cbe2"
-               }
-            ],
-            [
-               ".",
-               "processes_dead",
-               ".",
-               ".",
-               {
-                  "label":"Dead",
-                  "color":"#b1d28c"
-               }
-            ],
-            [
-               ".",
-               "processes_zombies",
-               ".",
-               ".",
-               {
-                  "label":"Zombies",
-                  "color":"#78574b"
-               }
-            ]
+            [ { "expression": "AVG(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} processes_running', 'Average', 300))", "label": "cluster running process average", "id": "e3" } ],
+            [ { "expression": "AVG(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} processes_sleeping', 'Average', 300))", "label": "cluster sleeping process average", "id": "e4" } ],
+            [ { "expression": "MAX(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} processes_running', 'Average', 300))", "label": "cluster running process maximum", "id": "e5" } ],
+            [ { "expression": "MAX(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} processes_sleeping', 'Average', 300))", "label": "cluster sleeping process maximum", "id": "e6" } ]
          ],
          "region":"{region}",
          "stat":"Average",
          "period":60,
-         "title":"Process Types"
+         "title":"Single Node Processes (Avg and Max)"
       }
    },
    {
       "type":"metric",
       "x":12,
-      "y":18,
-      "width":12,
-      "height":6,
-      "properties":{
-         "view":"timeSeries",
-         "metrics":[
-            [
-               "CWAgent",
-               "processes_total",
-               "InstanceId",
-               "{instance_id}",
-               {
-                  "label":"Total",
-                  "color":"#69cbe2"
-               }
-            ],
-            [
-               ".",
-               "processes_total_threads",
-               ".",
-               ".",
-               {
-                  "label":"Total Threads",
-                  "color":"#f1b3aa"
-               }
-            ]
-         ],
-         "region":"{region}",
-         "stat":"Average",
-         "period":60,
-         "title":"Process Count"
-      }
-   },
-   {
-      "type":"metric",
-      "x":0,
-      "y":24,
+      "y":12,
       "width":12,
       "height":6,
       "properties":{
          "view":"timeSeries",
          "stacked":false,
          "metrics":[
-            [
-               "CWAgent",
-               "disk_used_percent",
-               "path",
-               "/dev",
-               "InstanceId",
-               "{instance_id}",
-               "device",
-               "udev",
-               "fstype",
-               "devtmpfs"
-            ],
-            [
-               "...",
-               "/run",
-               ".",
-               ".",
-               ".",
-               "tmpfs",
-               ".",
-               "tmpfs"
-            ],
-            [
-               "...",
-               "/",
-               ".",
-               ".",
-               ".",
-               "nvme0n1p1",
-               ".",
-               "ext4"
-            ],
-            [
-               "...",
-               "/dev/shm",
-               ".",
-               ".",
-               ".",
-               "tmpfs",
-               ".",
-               "tmpfs"
-            ],
-            [
-               "...",
-               "/run/lock",
-               ".",
-               ".",
-               ".",
-               ".",
-               ".",
-               "."
-            ],
-            [
-               "...",
-               "/sys/fs/cgroup",
-               ".",
-               ".",
-               ".",
-               ".",
-               ".",
-               "."
-            ],
-            [
-               "...",
-               "/snap/core/8689",
-               ".",
-               ".",
-               ".",
-               "loop1",
-               ".",
-               "squashfs"
-            ],
-            [
-               "...",
-               "/snap/amazon-ssm-agent/1480",
-               ".",
-               ".",
-               ".",
-               "loop3",
-               ".",
-               "."
-            ]
+            [ { "expression": "SUM(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} disk_used_percent', 'Average', 300))", "label": "cluster disk used percent sum", "id": "e7", "period": 300 } ]
+
          ],
          "region":"{region}",
-         "title":"Disk used"
+         "title":"Cluster Disk Usage"
+      }
+   },
+   {
+      "type":"metric",
+      "x":0,
+      "y":12,
+      "width":12,
+      "height":6,
+      "properties":{
+         "view":"timeSeries",
+         "stacked":false,
+         "metrics":[
+            [ { "expression": "AVG(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} disk_used_percent', 'Average', 300))", "id": "e8", "label": "cluster disk used percent average", "period": 300 } ],
+            [ { "expression": "MAX(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} disk_used_percent', 'Maximum', 300))", "id": "e9", "label": "cluster disk used percent maximum", "period": 300 } ]
+
+         ],
+         "region":"{region}",
+         "title":"Single Node Disk Usage (Avg and Max)"
       }
    },
    {
       "type":"metric",
       "x":12,
-      "y":24,
+      "y":18,
       "width":12,
       "height":6,
-      "properties":{
-         "view":"timeSeries",
-         "metrics":[
-            [
-               "CWAgent",
-               "mem_used_percent",
-               "InstanceId",
-               "{instance_id}"
-            ]
-         ],
-         "region":"{region}",
-         "stat":"Average",
-         "period":60,
-         "title":"Memory used"
+      "properties": {
+          "metrics": [
+              [ { "expression": "SUM(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} mem_used_percent', 'Average', 300))", "id": "e10", "label": "cluster mem used percent sum", "period": 300 } ]
+
+          ],
+          "view": "timeSeries",
+          "stacked": false,
+          "region": "{region}",
+          "stat": "Maximum",
+          "period": 300,
+          "start": "-PT2H",
+          "end": "P0D",
+          "title": "Cluster Memory Usage"
+      }
+   },
+   {
+      "type":"metric",
+      "x":0,
+      "y":18,
+      "width":12,
+      "height":6,
+      "properties": {
+          "metrics": [
+              [ { "expression": "AVG(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} mem_used_percent', 'Average', 300))", "id": "e11", "label": "cluster mem used percent average", "period": 300 } ],
+              [ { "expression": "MAX(SEARCH('{{cluster_name}-ray-CWAgent,InstanceId} mem_used_percent', 'Maximum', 300))", "id": "e12", "label": "cluster mem used percent maximum", "period": 300 } ]
+          ],
+          "view": "timeSeries",
+          "stacked": false,
+          "region": "{region}",
+          "stat": "Maximum",
+          "period": 300,
+          "start": "-PT2H",
+          "end": "P0D",
+          "title": "Single Node Memory Usage (Avg and Max)"
+      }
+   },
+   {
+      "height": 6,
+      "width": 12,
+      "y": 0,
+      "x": 0,
+      "type": "metric",
+      "properties": {
+          "metrics": [
+              [ { "expression": "SUM(SEARCH('{{cluster_name}-ray-prometheus,instance} ray_node_cpu_count', 'Maximum', 300))", "label": "cluster cpu sum", "id": "e13" } ]
+          ],
+          "view": "timeSeries",
+          "stacked": false,
+          "region": "{region}",
+          "stat": "Maximum",
+          "period": 300,
+          "start": "-PT2H",
+          "end": "P0D",
+          "title": "Cluster CPUs"
+      }
+   },
+   {
+      "height": 6,
+      "width": 12,
+      "y": 0,
+      "x": 12,
+      "type": "metric",
+      "properties": {
+          "metrics": [
+              [ { "expression": "SUM(SEARCH('{{cluster_name}-ray-prometheus,instance} object_store_available_memory', 'Average', 300))", "label": "cluster object store available memory sum", "id": "e14" } ]
+          ],
+          "view": "timeSeries",
+          "stacked": false,
+          "region": "{region}",
+          "stat": "Maximum",
+          "period": 300,
+          "start": "-PT2H",
+          "end": "P0D",
+          "title": "Cluster Object Store Available Memory"
       }
    }
 ]
+

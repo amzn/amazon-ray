@@ -4,10 +4,11 @@ import numpy as np
 from typing import List, Any, Dict, Optional, TYPE_CHECKING
 
 from ray.rllib.env.base_env import _DUMMY_AGENT_ID
-from ray.rllib.evaluation.episode import MultiAgentEpisode
+from ray.rllib.evaluation.episode import Episode
 from ray.rllib.policy.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch, MultiAgentBatch
-from ray.rllib.utils.annotations import PublicAPI, DeveloperAPI
+from ray.rllib.utils.annotations import DeveloperAPI
+from ray.rllib.utils.deprecation import Deprecated
 from ray.rllib.utils.debug import summarize
 from ray.rllib.utils.deprecation import deprecation_warning
 from ray.rllib.utils.typing import PolicyID, AgentID
@@ -26,8 +27,7 @@ def to_float_array(v: List[Any]) -> np.ndarray:
     return arr
 
 
-# Deprecated class: Use a child class of `SampleCollector` instead.
-@PublicAPI
+@Deprecated(new="a child class of `SampleCollector`", error=False)
 class SampleBatchBuilder:
     """Util to build a SampleBatch incrementally.
 
@@ -37,17 +37,10 @@ class SampleBatchBuilder:
 
     _next_unroll_id = 0  # disambiguates unrolls within a single episode
 
-    @PublicAPI
     def __init__(self):
-        if log_once("SampleBatchBuilder"):
-            deprecation_warning(
-                old="SampleBatchBuilder",
-                new="child class of `SampleCollector`",
-                error=False)
         self.buffers: Dict[str, List] = collections.defaultdict(list)
         self.count = 0
 
-    @PublicAPI
     def add_values(self, **values: Any) -> None:
         """Add the given dictionary (row) of values to this batch."""
 
@@ -55,7 +48,6 @@ class SampleBatchBuilder:
             self.buffers[k].append(v)
         self.count += 1
 
-    @PublicAPI
     def add_batch(self, batch: SampleBatch) -> None:
         """Add the given batch of values to this batch."""
 
@@ -63,7 +55,6 @@ class SampleBatchBuilder:
             self.buffers[k].extend(column)
         self.count += batch.count
 
-    @PublicAPI
     def build_and_reset(self) -> SampleBatch:
         """Returns a sample batch including all previously added values."""
 
@@ -162,15 +153,15 @@ class MultiAgentSampleBatchBuilder:
 
         self.agent_builders[agent_id].add_values(**values)
 
-    def postprocess_batch_so_far(
-            self, episode: Optional[MultiAgentEpisode] = None) -> None:
+    def postprocess_batch_so_far(self,
+                                 episode: Optional[Episode] = None) -> None:
         """Apply policy postprocessors to any unprocessed rows.
 
         This pushes the postprocessed per-agent batches onto the per-policy
         builders, clearing per-agent state.
 
         Args:
-            episode (Optional[MultiAgentEpisode]): The Episode object that
+            episode (Optional[Episode]): The Episode object that
                 holds this MultiAgentBatchBuilder object.
         """
 
@@ -205,8 +196,7 @@ class MultiAgentSampleBatchBuilder:
             post_batches[agent_id] = pre_batch
             if getattr(policy, "exploration", None) is not None:
                 policy.exploration.postprocess_trajectory(
-                    policy, post_batches[agent_id],
-                    getattr(policy, "_sess", None))
+                    policy, post_batches[agent_id], policy.get_session())
             post_batches[agent_id] = policy.postprocess_trajectory(
                 post_batches[agent_id], other_batches, episode)
 
@@ -245,15 +235,15 @@ class MultiAgentSampleBatchBuilder:
                     "Alternatively, set no_done_at_end=True to allow this.")
 
     @DeveloperAPI
-    def build_and_reset(self, episode: Optional[MultiAgentEpisode] = None
-                        ) -> MultiAgentBatch:
+    def build_and_reset(self,
+                        episode: Optional[Episode] = None) -> MultiAgentBatch:
         """Returns the accumulated sample batches for each policy.
 
         Any unprocessed rows will be first postprocessed with a policy
         postprocessor. The internal state of this builder will be reset.
 
         Args:
-            episode (Optional[MultiAgentEpisode]): The Episode object that
+            episode (Optional[Episode]): The Episode object that
                 holds this MultiAgentBatchBuilder object or None.
 
         Returns:

@@ -15,7 +15,8 @@ echo "For example, if you are using releases/1.3.0 wheel, you should checkout to
 echo "Example: git checkout -b releases/1.3.0 upstream/releases/1.3.0"
 #exit 1
 pip uninstall -y ray
-pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/releases/1.4.0/0e95428a5975b774d266893102c39c8e137da5d8/ray-1.4.0-cp38-cp38-manylinux2014_x86_64.whl
+pip uninstall -y amzn-ray
+pip install -U http://d168575n8y1h5x.cloudfront.net/latest/amzn_ray-1.4.0-cp36-cp36m-manylinux2014_x86_64.whl
 
 for dask_version in "${DASK_VERSION[@]}"
 do   # The quotes are necessary here

@@ -14,15 +14,15 @@ import numpy as np
 
 import ray
 from ray._private.utils import binary_to_hex
-from ray.new_dashboard.tests.conftest import *  # noqa
-from ray.new_dashboard.modules.event import event_consts
+from ray.dashboard.tests.conftest import *  # noqa
+from ray.dashboard.modules.event import event_consts
 from ray.core.generated import event_pb2
-from ray.test_utils import (
+from ray._private.test_utils import (
     format_web_url,
     wait_until_server_available,
     wait_for_condition,
 )
-from ray.new_dashboard.modules.event.event_utils import (
+from ray.dashboard.modules.event.event_utils import (
     monitor_events, )
 
 logger = logging.getLogger(__name__)
@@ -62,8 +62,7 @@ def _test_logger(name, log_file, max_bytes, backup_count):
     return logger
 
 
-def test_event_basic(enable_event_module, disable_aiohttp_cache,
-                     ray_start_with_dashboard):
+def test_event_basic(disable_aiohttp_cache, ray_start_with_dashboard):
     assert (wait_until_server_available(ray_start_with_dashboard["webui_url"]))
     webui_url = format_web_url(ray_start_with_dashboard["webui_url"])
     session_dir = ray_start_with_dashboard["session_dir"]
@@ -113,8 +112,8 @@ def test_event_basic(enable_event_module, disable_aiohttp_cache,
     wait_for_condition(_check_events, timeout=15)
 
 
-def test_event_message_limit(enable_event_module, small_event_line_limit,
-                             disable_aiohttp_cache, ray_start_with_dashboard):
+def test_event_message_limit(small_event_line_limit, disable_aiohttp_cache,
+                             ray_start_with_dashboard):
     event_read_line_length_limit = small_event_line_limit
     assert (wait_until_server_available(ray_start_with_dashboard["webui_url"]))
     webui_url = format_web_url(ray_start_with_dashboard["webui_url"])
@@ -175,7 +174,7 @@ def test_event_message_limit(enable_event_module, small_event_line_limit,
 
 
 @pytest.mark.asyncio
-async def test_monitor_events(enable_event_module):
+async def test_monitor_events():
     with tempfile.TemporaryDirectory() as temp_dir:
         common = event_pb2.Event.SourceType.Name(event_pb2.Event.COMMON)
         common_log = os.path.join(temp_dir, f"event_{common}.log")
@@ -184,22 +183,22 @@ async def test_monitor_events(enable_event_module):
             common_log,
             max_bytes=10,
             backup_count=10)
-        read_events = []
+        test_events1 = []
         monitor_task = monitor_events(
             temp_dir,
-            lambda x: read_events.extend(x),
+            lambda x: test_events1.extend(x),
             scan_interval_seconds=0.01)
         assert not monitor_task.done()
         count = 10
 
-        async def _writer(*args, spin=True):
+        async def _writer(*args, read_events, spin=True):
             for x in range(*args):
                 test_logger.info("%s", x)
                 if spin:
                     while str(x) not in read_events:
                         await asyncio.sleep(0.01)
 
-        async def _check_events(expect_events, timeout=10):
+        async def _check_events(expect_events, read_events, timeout=10):
             start_time = time.time()
             while True:
                 sorted_events = sorted(int(i) for i in read_events)
@@ -214,19 +213,23 @@ async def test_monitor_events(enable_event_module):
                 await asyncio.sleep(1)
 
         await asyncio.gather(
-            _writer(count), _check_events([str(i) for i in range(count)]))
+            _writer(count, read_events=test_events1),
+            _check_events(
+                [str(i) for i in range(count)], read_events=test_events1))
 
         monitor_task.cancel()
-        read_events = []
+        test_events2 = []
         monitor_task = monitor_events(
             temp_dir,
-            lambda x: read_events.extend(x),
+            lambda x: test_events2.extend(x),
             scan_interval_seconds=0.1)
 
-        await _check_events([str(i) for i in range(count)])
+        await _check_events(
+            [str(i) for i in range(count)], read_events=test_events2)
 
-        await _writer(count, count * 2)
-        await _check_events([str(i) for i in range(count * 2)])
+        await _writer(count, count * 2, read_events=test_events2)
+        await _check_events(
+            [str(i) for i in range(count * 2)], read_events=test_events2)
 
         log_file_count = len(os.listdir(temp_dir))
 
@@ -237,10 +240,14 @@ async def test_monitor_events(enable_event_module):
             backup_count=10)
         assert len(os.listdir(temp_dir)) == log_file_count
 
-        await _writer(count * 2, count * 3, spin=False)
-        await _check_events([str(i) for i in range(count * 3)])
-        await _writer(count * 3, count * 4, spin=False)
-        await _check_events([str(i) for i in range(count * 4)])
+        await _writer(
+            count * 2, count * 3, spin=False, read_events=test_events2)
+        await _check_events(
+            [str(i) for i in range(count * 3)], read_events=test_events2)
+        await _writer(
+            count * 3, count * 4, spin=False, read_events=test_events2)
+        await _check_events(
+            [str(i) for i in range(count * 4)], read_events=test_events2)
 
         # Test cancel monitor task.
         monitor_task.cancel()

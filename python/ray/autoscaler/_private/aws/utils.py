@@ -128,7 +128,6 @@ def boto_exception_handler(msg, *args, **kwargs):
     return ExceptionHandlerContextManager()
 
 
-
 @lru_cache()
 def resource_cache(name, region, max_retries=BOTO_MAX_RETRIES, **kwargs):
     cli_logger.verbose("Creating AWS resource `{}` in `{}`", cf.bold(name),

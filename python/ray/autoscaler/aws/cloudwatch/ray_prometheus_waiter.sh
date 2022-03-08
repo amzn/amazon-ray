@@ -1,3 +1,5 @@
+#!/bin/bash
+
 MAX_ATTEMPTS=120
 DELAY_SECONDS=10
 RAY_PROM_METRICS_FILE_PATH="/tmp/ray/prom_metrics_service_discovery.json"
@@ -8,7 +10,7 @@ while [ $MAX_ATTEMPTS -gt 0 ]; do
     echo "Restarting cloudwatch agent.This may take a few minutes..."
     sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a stop
     echo "Cloudwatch agent stopped, starting cloudwatch agent..."
-    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:ray_cloudwatch_agent_config_$CLUSTER_NAME
+    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c "ssm:AmazonCloudWatch-ray_agent_config_$CLUSTER_NAME"
     echo "Cloudwatch agent successfully restarted!"
     exit 0
   else

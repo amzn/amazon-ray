@@ -338,7 +338,7 @@ Resources and Troubleshooting
 
 Assuming you followed the naming convention and have completed the step of
 updating the version on the release branch, you will be able to find wheels
-for your release at the following URL (with, e.g. VERSION=1.3.0): ``https://s3-us-west-2.amazonaws.com/ray-wheels/releases/<VERSION>/bfc8d1be43b86a9d3008aa07ca9f36664e02d1ba1/<VERSION>-cp37-cp37m-macosx_10_13_intel.whl``
+for your release at the following URL (with, e.g. VERSION=1.3.0): ``http://d168575n8y1h5x.cloudfront.net/releases/<VERSION>/bfc8d1be43b86a9d3008aa07ca9f36664e02d1ba1/<VERSION>-cp37-cp37m-macosx_10_13_intel.whl``
 (Note, the exact URL varies a bit by python version and platform,
 this is for OSX on Python 3.7)
 

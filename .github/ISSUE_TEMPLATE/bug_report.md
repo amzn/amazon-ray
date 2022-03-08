@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a bug on the latest version of Ray.
+about: Report a bug.
 title: ''
 labels: bug, triage
 assignees: ''
@@ -19,4 +19,4 @@ Please provide a short code snippet (less than 50 lines if possible) that can be
 If the code snippet cannot be run by itself, the issue will be closed with "needs-repro-script".
 
 - [ ] I have verified my script runs in a clean environment and reproduces the issue.
-- [ ] I have verified the issue also occurs with the [latest wheels](https://docs.ray.io/en/master/installation.html).
+- [ ] I have verified the issue also occurs with the latest wheels.

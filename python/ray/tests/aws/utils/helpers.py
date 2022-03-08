@@ -123,7 +123,8 @@ def get_cloudwatch_helper(node_ids):
     )
 
 
-def get_ssm_param_name(cluster_name, section_name):
-    ssm_config_param_name = "ray_cloudwatch_{}_config_{}".format(
-        section_name, cluster_name)
+def get_ssm_param_name(cluster_name, config_type):
+    ssm_config_param_name = "AmazonCloudWatch-" + "ray_{}_config_{}". \
+            format(config_type, cluster_name)
     return ssm_config_param_name
+

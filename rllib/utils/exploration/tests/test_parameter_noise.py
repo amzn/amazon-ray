@@ -18,12 +18,12 @@ class TestParameterNoise(unittest.TestCase):
 
     def test_ddpg_parameter_noise(self):
         self.do_test_parameter_noise_exploration(
-            ddpg.DDPGTrainer, ddpg.DEFAULT_CONFIG, "Pendulum-v0", {},
+            ddpg.DDPGTrainer, ddpg.DEFAULT_CONFIG, "Pendulum-v1", {},
             np.array([1.0, 0.0, -1.0]))
 
     def test_dqn_parameter_noise(self):
         self.do_test_parameter_noise_exploration(
-            dqn.DQNTrainer, dqn.DEFAULT_CONFIG, "FrozenLake-v0", {
+            dqn.DQNTrainer, dqn.DEFAULT_CONFIG, "FrozenLake-v1", {
                 "is_slippery": False,
                 "map_name": "4x4"
             }, np.array(0))
@@ -45,7 +45,7 @@ class TestParameterNoise(unittest.TestCase):
 
             trainer = trainer_cls(config=config, env=env)
             policy = trainer.get_policy()
-            pol_sess = getattr(policy, "_sess", None)
+            pol_sess = policy.get_session()
             # Remove noise that has been added during policy initialization
             # (exploration.postprocess_trajectory does add noise to measure
             # the delta).
@@ -110,7 +110,7 @@ class TestParameterNoise(unittest.TestCase):
             config["explore"] = False
             trainer = trainer_cls(config=config, env=env)
             policy = trainer.get_policy()
-            pol_sess = getattr(policy, "_sess", None)
+            pol_sess = policy.get_session()
             # Remove noise that has been added during policy initialization
             # (exploration.postprocess_trajectory does add noise to measure
             # the delta).

@@ -1,5 +1,5 @@
 name: testproject3
-repo: "https://github.com/ray-project/ray"
+repo: "https://github.com/amzn/amazon-ray"
 
 environment:
   shell:

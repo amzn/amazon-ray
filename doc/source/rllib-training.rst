@@ -1,7 +1,4 @@
-
-.. important:: The ML team at `Anyscale Inc. <https://anyscale.io>`__, the company behind Ray, is looking for interns and full-time **reinforcement learning engineers** to help advance and maintain RLlib.
- If you have a background in ML/RL and are interested in making RLlib **the** industry-leading open-source RL library, `apply here today <https://jobs.lever.co/anyscale/186d9b8d-3fee-4e07-bb8e-49e85cf33d6b>`__.
- We'd be thrilled to welcome you on the team!
+.. include:: rllib/we_are_hiring.rst
 
 RLlib Training APIs
 ===================
@@ -15,11 +12,12 @@ be trained, checkpointed, or an action computed. In multi-agent training, the tr
 
 .. image:: rllib-api.svg
 
-You can train a simple DQN trainer with the following command:
+You can train a simple DQN trainer with the following commands:
 
 .. code-block:: bash
 
-    rllib train --run DQN --env CartPole-v0  # --config '{"framework": "tf2", "eager_tracing": True}' for eager execution
+    pip install "ray[rllib]" tensorflow
+    rllib train --run DQN --env CartPole-v0  # --config '{"framework": "tf2", "eager_tracing": true}' for eager execution
 
 By default, the results will be logged to a subdirectory of ``~/ray_results``.
 This subdirectory will contain a file ``params.json`` which contains the
@@ -86,9 +84,30 @@ In an example below, we train A2C by specifying 8 workers through the config fla
 Specifying Resources
 ~~~~~~~~~~~~~~~~~~~~
 
-You can control the degree of parallelism used by setting the ``num_workers`` hyperparameter for most algorithms. The number of GPUs the driver should use can be set via the ``num_gpus`` option. Similarly, the resource allocation to workers can be controlled via ``num_cpus_per_worker``, ``num_gpus_per_worker``, and ``custom_resources_per_worker``. The number of GPUs can be a fractional quantity to allocate only a fraction of a GPU. For example, with DQN you can pack five trainers onto one GPU by setting ``num_gpus: 0.2``.
+You can control the degree of parallelism used by setting the ``num_workers``
+hyperparameter for most algorithms. The Trainer will construct that many
+"remote worker" instances (`see RolloutWorker class <https://github.com/ray-project/ray/blob/master/rllib/evaluation/rollout_worker.py>`__)
+that are constructed as ray.remote actors, plus exactly one "local worker", a ``RolloutWorker`` object that is not a
+ray actor, but lives directly inside the Trainer.
+For most algorithms, learning updates are performed on the local worker and sample collection from
+one or more environments is performed by the remote workers (in parallel).
+For example, setting ``num_workers=0`` will only create the local worker, in which case both
+sample collection and training will be done by the local worker.
+On the other hand, setting ``num_workers=5`` will create the local worker (responsible for training updates)
+and 5 remote workers (responsible for sample collection).
 
-For synchronous algorithms like PPO and A2C, the driver and workers can make use of the same GPU. To do this for an amount of ``n`` GPUS:
+Since learning is most of the time done on the local worker, it may help to provide one or more GPUs
+to that worker via the ``num_gpus`` setting.
+Similarly, the resource allocation to remote workers can be controlled via ``num_cpus_per_worker``, ``num_gpus_per_worker``, and ``custom_resources_per_worker``.
+
+The number of GPUs can be fractional quantities (e.g. 0.5) to allocate only a fraction
+of a GPU. For example, with DQN you can pack five trainers onto one GPU by setting
+``num_gpus: 0.2``. Check out `this fractional GPU example here <https://github.com/ray-project/ray/blob/master/rllib/examples/fractional_gpus.py>`__
+as well that also demonstrates how environments (running on the remote workers) that
+require a GPU can benefit from the ``num_gpus_per_worker`` setting.
+
+For synchronous algorithms like PPO and A2C, the driver and workers can make use of
+the same GPU. To do this for an amount of ``n`` GPUS:
 
 .. code-block:: python
 
@@ -98,6 +117,11 @@ For synchronous algorithms like PPO and A2C, the driver and workers can make use
 
 .. Original image: https://docs.google.com/drawings/d/14QINFvx3grVyJyjAnjggOCEVN-Iq6pYVJ3jA2S6j8z0/edit?usp=sharing
 .. image:: rllib-config.svg
+
+If you specify ``num_gpus`` and your machine does not have the required number of GPUs
+available, a RuntimeError will be thrown by the respective worker. On the other hand,
+if you set ``num_gpus=0``, your policies will be built solely on the CPU, even if
+GPUs are available on the machine.
 
 Scaling Guide
 ~~~~~~~~~~~~~
@@ -372,6 +396,15 @@ Similar to accessing policy state, you may want to get a reference to the underl
 
 **Example: Preprocessing observations for feeding into a model**
 
+First, install the dependencies:
+
+.. code-block:: python
+
+    # The "Pong-v0" Atari environment requires a few additional gym installs:
+    pip install "ray[rllib]" tensorflow torch "gym[atari]" "gym[accept-rom-license]" atari_py
+
+Then for the code:
+
 .. code-block:: python
 
     >>> import gym
@@ -580,6 +613,8 @@ Visualizing Custom Metrics
 Custom metrics can be accessed and visualized like any other training result:
 
 .. image:: custom_metric.png
+
+.. _exploration-api:
 
 Customizing Exploration Behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -921,7 +956,7 @@ Eager Mode
 
 Policies built with ``build_tf_policy`` (most of the reference algorithms are)
 can be run in eager mode by setting the
-``"framework": "[tf2|tfe]"`` / ``"eager_tracing": True`` config options or using
+``"framework": "[tf2|tfe]"`` / ``"eager_tracing": true`` config options or using
 ``rllib train --config '{"framework": "tf2"}' [--trace]``.
 This will tell RLlib to execute the model forward pass, action distribution,
 loss, and stats functions in eager mode.
