@@ -741,6 +741,7 @@ class CloudwatchHelper:
         Args:
             config: provider section of cluster config file.
             config_type: type of CloudWatch config file.
+
         Returns:
             True if config file is specified by user.
             False if config file is not specified.

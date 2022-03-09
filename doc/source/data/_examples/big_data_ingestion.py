@@ -1,5 +1,8 @@
 # flake8: noqa: E501
 """
+
+.. _data_ml_ingest_example:
+
 Example: Large-scale ML Ingest
 =================================================
 
@@ -15,7 +18,7 @@ In particular, we will show you:
 * How to scale the pipeline from ingesting 100MiB data to
   500GiB data.
 
-.. image:: ../../data/dataset-repeat-2.svg
+.. image:: ../images/dataset-repeat-2.svg
     :align: center
 
 """
@@ -94,7 +97,7 @@ class TrainingWorker:
         self.shard = shard
 
     def train(self):
-        for epoch, training_dataset in enumerate(self.shard.iter_datasets()):
+        for epoch, training_dataset in enumerate(self.shard.iter_epochs()):
             # Following code emulates epoch based SGD training.
             print(f"Training... worker: {self.rank}, epoch: {epoch}")
             for i, batch in enumerate(training_dataset.iter_batches()):

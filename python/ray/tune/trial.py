@@ -444,6 +444,10 @@ class Trial:
 
     @property
     def remote_checkpoint_dir(self):
+        """This is the **per trial** remote checkpoint dir.
+
+        This is different from **per experiment** remote checkpoint dir.
+        """
         assert self.logdir, "Trial {}: logdir not initialized.".format(self)
         if not self.remote_checkpoint_dir_prefix:
             return None
@@ -627,7 +631,7 @@ class Trial:
         """
         return self.num_failures < self.max_failures or self.max_failures < 0
 
-    def update_last_result(self, result, terminate=False):
+    def update_last_result(self, result):
         if self.experiment_tag:
             result.update(experiment_tag=self.experiment_tag)
 
@@ -773,7 +777,11 @@ class Trial:
         for key in self._nonjson_fields:
             state[key] = cloudpickle.loads(hex_to_binary(state[key]))
 
+        # Ensure that stub doesn't get overriden
+        stub = state.pop("stub", True)
         self.__dict__.update(state)
+        self.stub = stub or getattr(self, "stub", False)
+
         if not self.stub:
             validate_trainable(self.trainable_name)
 
