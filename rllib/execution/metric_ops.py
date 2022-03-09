@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, Dict, List, Optional
 import time
 
 from ray.actor import ActorHandle
@@ -43,12 +43,13 @@ def StandardMetricsReporting(
     output_op = train_op \
         .filter(OncePerTimestepsElapsed(config["timesteps_per_iteration"],
                                         by_steps_trained=by_steps_trained)) \
-        .filter(OncePerTimeInterval(config["min_iter_time_s"])) \
+        .filter(OncePerTimeInterval(config["min_time_s_per_reporting"])) \
         .for_each(CollectMetrics(
             workers,
-            min_history=config["metrics_smoothing_episodes"],
-            timeout_seconds=config["collect_metrics_timeout"],
-            selected_workers=selected_workers))
+            min_history=config["metrics_num_episodes_for_smoothing"],
+            timeout_seconds=config["metrics_episode_collection_timeout_s"],
+            selected_workers=selected_workers,
+            by_steps_trained=by_steps_trained))
     return output_op
 
 
@@ -70,13 +71,15 @@ class CollectMetrics:
                  workers: WorkerSet,
                  min_history: int = 100,
                  timeout_seconds: int = 180,
-                 selected_workers: List[ActorHandle] = None):
+                 selected_workers: List[ActorHandle] = None,
+                 by_steps_trained: bool = False):
         self.workers = workers
         self.episode_history = []
         self.to_be_collected = []
         self.min_history = min_history
         self.timeout_seconds = timeout_seconds
         self.selected_workers = selected_workers
+        self.by_steps_trained = by_steps_trained
 
     def __call__(self, _: Any) -> Dict:
         # Collect worker metrics.
@@ -110,7 +113,9 @@ class CollectMetrics:
                     timer.mean_throughput, 3)
         res.update({
             "num_healthy_workers": len(self.workers.remote_workers()),
-            "timesteps_total": metrics.counters[STEPS_SAMPLED_COUNTER],
+            "timesteps_total": (metrics.counters[STEPS_TRAINED_COUNTER]
+                                if self.by_steps_trained else
+                                metrics.counters[STEPS_SAMPLED_COUNTER]),
             # tune.Trainable uses timesteps_this_iter for tracking
             # total timesteps.
             "timesteps_this_iter": metrics.counters[
@@ -142,16 +147,19 @@ class OncePerTimeInterval:
         5.00001  # will be greater than 5 seconds
     """
 
-    def __init__(self, delay: int):
-        self.delay = delay
-        self.last_called = 0
+    def __init__(self, delay: Optional[float] = None):
+        self.delay = delay or 0.0
+        self.last_returned_true = 0
 
     def __call__(self, item: Any) -> bool:
+        # No minimum time to wait for -> Return True.
         if self.delay <= 0.0:
             return True
+        # Return True, if time since last returned=True is larger than
+        # `self.delay`.
         now = time.time()
-        if now - self.last_called > self.delay:
-            self.last_called = now
+        if now - self.last_returned_true > self.delay:
+            self.last_returned_true = now
             return True
         return False
 

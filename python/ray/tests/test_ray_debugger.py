@@ -9,7 +9,7 @@ import pexpect
 import pytest
 
 import ray
-from ray.cluster_utils import Cluster
+from ray.cluster_utils import Cluster, cluster_not_supported
 from ray import ray_constants
 from ray._private.test_utils import run_string_as_driver, wait_for_condition
 from ray._private import services
@@ -58,6 +58,10 @@ def test_ray_debugger_commands(shutdown_only):
 
     result1 = f.remote()
     result2 = f.remote()
+
+    wait_for_condition(lambda: len(
+        ray.experimental.internal_kv._internal_kv_list(
+            "RAY_PDB_", namespace=ray_constants.KV_NAMESPACE_PDB)) > 0)
 
     # Make sure that calling "continue" in the debugger
     # gives back control to the debugger loop:
@@ -146,7 +150,7 @@ def test_ray_debugger_recursive(shutdown_only):
 @pytest.mark.skipif(
     platform.system() == "Windows", reason="Failing on Windows.")
 def test_job_exit_cleanup(ray_start_regular):
-    address = ray_start_regular["redis_address"]
+    address = ray_start_regular["address"]
 
     driver_script = """
 import time
@@ -241,8 +245,7 @@ def test_ray_debugger_public(shutdown_only, call_ray_stop_only,
     ray.get(result)
 
 
-@pytest.mark.skipif(
-    platform.system() == "Windows", reason="Failing on Windows.")
+@pytest.mark.xfail(cluster_not_supported, reason="cluster not supported")
 @pytest.mark.parametrize("ray_debugger_external", [False, True])
 def test_ray_debugger_public_multi_node(shutdown_only, ray_debugger_external):
     c = Cluster(

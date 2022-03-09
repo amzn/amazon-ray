@@ -360,8 +360,8 @@ class AWSNodeProvider(NodeProvider):
                 "Key": k,
                 "Value": v,
             })
-        if CloudwatchHelper.cloudwatch_config_exists(
-                self.provider_config, CloudwatchConfigType.AGENT):
+        if CloudwatchHelper.cloudwatch_config_exists(self.provider_config,
+                                                     "agent"):
             cwa_installed = self._check_ami_cwa_installation(node_config)
             if cwa_installed:
                 tag_pairs.extend([{

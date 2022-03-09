@@ -84,8 +84,8 @@ class Archive:
     """
 
     def __init__(self, file: Optional[str] = None):
-        self.file = file or tempfile.mktemp(
-            prefix="ray_logs_", suffix=".tar.gz")
+        self.file = file or tempfile.mkstemp(
+            prefix="ray_logs_", suffix=".tar.gz")[1]
         self.tar = None
         self._lock = threading.Lock()
 
@@ -206,7 +206,7 @@ def get_local_debug_state(archive: Archive,
         archive.open()
 
     session_dir = os.path.expanduser(session_dir)
-    debug_state_file = os.path.join(session_dir, "debug_state.txt")
+    debug_state_file = os.path.join(session_dir, "logs/debug_state.txt")
 
     if not os.path.exists(debug_state_file):
         raise LocalCommandFailed("No `debug_state.txt` file found.")
@@ -409,8 +409,8 @@ def create_and_get_archive_from_remote_node(remote_node: Node,
     cat = "node" if not remote_node.is_head else "head"
 
     cli_logger.print(f"Collecting data from remote node: {remote_node.host}")
-    tmp = tempfile.mktemp(
-        prefix=f"ray_{cat}_{remote_node.host}_", suffix=".tar.gz")
+    tmp = tempfile.mkstemp(
+        prefix=f"ray_{cat}_{remote_node.host}_", suffix=".tar.gz")[1]
     with open(tmp, "wb") as fp:
         try:
             subprocess.check_call(cmd, stdout=fp, stderr=sys.stderr)

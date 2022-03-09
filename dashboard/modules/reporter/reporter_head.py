@@ -8,18 +8,21 @@ from aioredis.pubsub import Receiver
 import ray
 import ray.dashboard.modules.reporter.reporter_consts as reporter_consts
 import ray.dashboard.utils as dashboard_utils
+import ray.dashboard.optional_utils as dashboard_optional_utils
+from ray._private.gcs_pubsub import gcs_pubsub_enabled, \
+    GcsAioResourceUsageSubscriber
 import ray._private.services
 import ray._private.utils
-from ray.autoscaler._private.util import (DEBUG_AUTOSCALING_STATUS,
-                                          DEBUG_AUTOSCALING_STATUS_LEGACY,
-                                          DEBUG_AUTOSCALING_ERROR)
+from ray.ray_constants import (DEBUG_AUTOSCALING_STATUS,
+                               DEBUG_AUTOSCALING_STATUS_LEGACY,
+                               DEBUG_AUTOSCALING_ERROR)
 from ray.core.generated import reporter_pb2
 from ray.core.generated import reporter_pb2_grpc
 import ray.experimental.internal_kv as internal_kv
 from ray.dashboard.datacenter import DataSource
 
 logger = logging.getLogger(__name__)
-routes = dashboard_utils.ClassMethodRouteTable
+routes = dashboard_optional_utils.ClassMethodRouteTable
 
 
 class ReportHead(dashboard_utils.DashboardHeadModule):
@@ -53,7 +56,7 @@ class ReportHead(dashboard_utils.DashboardHeadModule):
             reporter_pb2.GetProfilingStatsRequest(pid=pid, duration=duration))
         profiling_info = (json.loads(reply.profiling_stats)
                           if reply.profiling_stats else reply.std_out)
-        return dashboard_utils.rest_response(
+        return dashboard_optional_utils.rest_response(
             success=True,
             message="Profiling success.",
             profiling_info=profiling_info)
@@ -66,12 +69,12 @@ class ReportHead(dashboard_utils.DashboardHeadModule):
                 with open(config_path) as f:
                     cfg = yaml.safe_load(f)
             except yaml.YAMLError:
-                return dashboard_utils.rest_response(
+                return dashboard_optional_utils.rest_response(
                     success=False,
                     message=f"No config found at {config_path}.",
                 )
             except FileNotFoundError:
-                return dashboard_utils.rest_response(
+                return dashboard_optional_utils.rest_response(
                     success=False,
                     message="Invalid config, could not load YAML.")
 
@@ -92,7 +95,7 @@ class ReportHead(dashboard_utils.DashboardHeadModule):
 
             self._ray_config = payload
 
-        return dashboard_utils.rest_response(
+        return dashboard_optional_utils.rest_response(
             success=True,
             message="Fetched ray config.",
             **self._ray_config,
@@ -119,7 +122,7 @@ class ReportHead(dashboard_utils.DashboardHeadModule):
         formatted_status = json.loads(formatted_status_string.decode()
                                       ) if formatted_status_string else {}
         error = internal_kv._internal_kv_get(DEBUG_AUTOSCALING_ERROR)
-        return dashboard_utils.rest_response(
+        return dashboard_optional_utils.rest_response(
             success=True,
             message="Got cluster status.",
             autoscaling_status=legacy_status.decode()
@@ -129,23 +132,38 @@ class ReportHead(dashboard_utils.DashboardHeadModule):
         )
 
     async def run(self, server):
-        # TODO: redis-removal pubsub
-        aioredis_client = self._dashboard_head.aioredis_client
-        receiver = Receiver()
+        if gcs_pubsub_enabled():
+            gcs_addr = await self._dashboard_head.get_gcs_address()
+            subscriber = GcsAioResourceUsageSubscriber(gcs_addr)
+            await subscriber.subscribe()
 
-        reporter_key = "{}*".format(reporter_consts.REPORTER_PREFIX)
-        await aioredis_client.psubscribe(receiver.pattern(reporter_key))
-        logger.info(f"Subscribed to {reporter_key}")
+            while True:
+                try:
+                    # The key is b'RAY_REPORTER:{node id hex}',
+                    # e.g. b'RAY_REPORTER:2b4fbd...'
+                    key, data = await subscriber.poll()
+                    if key is None:
+                        continue
+                    data = json.loads(data)
+                    node_id = key.split(":")[-1]
+                    DataSource.node_physical_stats[node_id] = data
+                except Exception:
+                    logger.exception("Error receiving node physical stats "
+                                     "from reporter agent.")
+        else:
+            receiver = Receiver()
+            aioredis_client = self._dashboard_head.aioredis_client
+            reporter_key = "{}*".format(reporter_consts.REPORTER_PREFIX)
+            await aioredis_client.psubscribe(receiver.pattern(reporter_key))
+            logger.info(f"Subscribed to {reporter_key}")
 
-        async for sender, msg in receiver.iter():
-            try:
-                # The key is b'RAY_REPORTER:{node id hex}',
-                # e.g. b'RAY_REPORTER:2b4fbd406898cc86fb88fb0acfd5456b0afd87cf'
-                key, data = msg
-                data = json.loads(ray._private.utils.decode(data))
-                key = key.decode("utf-8")
-                node_id = key.split(":")[-1]
-                DataSource.node_physical_stats[node_id] = data
-            except Exception:
-                logger.exception(
-                    "Error receiving node physical stats from reporter agent.")
+            async for sender, msg in receiver.iter():
+                try:
+                    key, data = msg
+                    data = json.loads(ray._private.utils.decode(data))
+                    key = key.decode("utf-8")
+                    node_id = key.split(":")[-1]
+                    DataSource.node_physical_stats[node_id] = data
+                except Exception:
+                    logger.exception("Error receiving node physical stats "
+                                     "from reporter agent.")

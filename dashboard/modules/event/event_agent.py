@@ -7,6 +7,7 @@ import ray.experimental.internal_kv as internal_kv
 import ray.ray_constants as ray_constants
 import ray._private.utils as utils
 import ray.dashboard.utils as dashboard_utils
+import ray.dashboard.optional_utils as dashboard_optional_utils
 import ray.dashboard.consts as dashboard_consts
 from ray.dashboard.utils import async_loop_forever, create_task
 from ray.dashboard.modules.event import event_consts
@@ -15,7 +16,7 @@ from ray.core.generated import event_pb2
 from ray.core.generated import event_pb2_grpc
 
 logger = logging.getLogger(__name__)
-routes = dashboard_utils.ClassMethodRouteTable
+routes = dashboard_optional_utils.ClassMethodRouteTable
 
 
 class EventAgent(dashboard_utils.DashboardAgentModule):
@@ -41,7 +42,7 @@ class EventAgent(dashboard_utils.DashboardAgentModule):
             try:
                 # TODO: Use async version if performance is an issue
                 dashboard_rpc_address = internal_kv._internal_kv_get(
-                    dashboard_consts.REDIS_KEY_DASHBOARD_RPC,
+                    dashboard_consts.DASHBOARD_RPC_ADDRESS,
                     namespace=ray_constants.KV_NAMESPACE_DASHBOARD)
                 if dashboard_rpc_address:
                     logger.info("Report events to %s", dashboard_rpc_address)

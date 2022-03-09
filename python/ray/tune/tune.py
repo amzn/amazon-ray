@@ -23,6 +23,8 @@ from ray.tune.progress_reporter import (detect_reporter, ProgressReporter,
                                         JupyterNotebookReporter)
 from ray.tune.ray_trial_executor import RayTrialExecutor
 from ray.tune.registry import get_trainable_cls
+from ray.tune.schedulers import (PopulationBasedTraining,
+                                 PopulationBasedTrainingReplay)
 from ray.tune.stopper import Stopper
 from ray.tune.suggest import BasicVariantGenerator, SearchAlgorithm, \
     SearchGenerator
@@ -251,15 +253,18 @@ def run(
         restore (str): Path to checkpoint. Only makes sense to set if
             running 1 trial. Defaults to None.
         server_port (int): Port number for launching TuneServer.
-        resume (str|bool): One of "LOCAL", "REMOTE", "PROMPT", "ERRORED_ONLY",
-            or bool. LOCAL/True restores the checkpoint from the
+        resume (str|bool): One of "LOCAL", "REMOTE", "PROMPT", "ERRORED_ONLY", "AUTO",
+            or bool. "LOCAL"/True restores the checkpoint from the
             local experiment directory, determined
-            by ``name`` and ``local_dir``. REMOTE restores the checkpoint
+            by ``name`` and ``local_dir``. "REMOTE" restores the checkpoint
             from ``upload_dir`` (as passed to ``sync_config``).
-            PROMPT provides CLI feedback.
-            False forces a new experiment. ERRORED_ONLY resets and reruns
-            ERRORED trials upon resume - previous trial artifacts will
-            be left untouched.  If resume is set but checkpoint does not exist,
+            "PROMPT" provides the CLI feedback.
+            False forces a new experiment. "ERRORED_ONLY" resets and reruns
+            errored trials upon resume - previous trial artifacts will
+            be left untouched.
+            "AUTO" will attempt to resume from a checkpoint and otherwise
+            start a new experiment.
+            If resume is set but checkpoint does not exist,
             ValueError will be thrown.
         reuse_actors (bool): Whether to reuse actors between different trials
             when possible. This can drastically speed up experiments that start
@@ -413,6 +418,13 @@ def run(
                 f"to 1 instead.")
         result_buffer_length = 1
 
+    if isinstance(scheduler,
+                  (PopulationBasedTraining,
+                   PopulationBasedTrainingReplay)) and not reuse_actors:
+        warnings.warn(
+            "Consider boosting PBT performance by enabling `reuse_actors` as "
+            "well as implementing `reset_config` for Trainable.")
+
     trial_executor = trial_executor or RayTrialExecutor(
         reuse_actors=reuse_actors, result_buffer_length=result_buffer_length)
     if isinstance(run_or_experiment, list):
@@ -462,21 +474,22 @@ def run(
     if not search_alg:
         search_alg = BasicVariantGenerator(
             max_concurrent=max_concurrent_trials or 0)
-    elif max_concurrent_trials:
+    elif max_concurrent_trials or is_local_mode:
         if isinstance(search_alg, ConcurrencyLimiter):
-            if search_alg.max_concurrent != max_concurrent_trials:
-                raise ValueError(
-                    "You have specified `max_concurrent_trials="
-                    f"{max_concurrent_trials}`, but the `search_alg` is "
-                    "already a `ConcurrencyLimiter` with `max_concurrent="
-                    f"{search_alg.max_concurrent}. FIX THIS by setting "
-                    "`max_concurrent_trials=None`.")
-            else:
-                logger.warning(
-                    "You have specified `max_concurrent_trials="
-                    f"{max_concurrent_trials}`, but the `search_alg` is "
-                    "already a `ConcurrencyLimiter`. `max_concurrent_trials` "
-                    "will be ignored.")
+            if not is_local_mode:
+                if search_alg.max_concurrent != max_concurrent_trials:
+                    raise ValueError(
+                        "You have specified `max_concurrent_trials="
+                        f"{max_concurrent_trials}`, but the `search_alg` is "
+                        "already a `ConcurrencyLimiter` with `max_concurrent="
+                        f"{search_alg.max_concurrent}. FIX THIS by setting "
+                        "`max_concurrent_trials=None`.")
+                else:
+                    logger.warning(
+                        "You have specified `max_concurrent_trials="
+                        f"{max_concurrent_trials}`, but the `search_alg` is "
+                        "already a `ConcurrencyLimiter`. "
+                        "`max_concurrent_trials` will be ignored.")
         else:
             if max_concurrent_trials < 1:
                 raise ValueError(
@@ -637,7 +650,8 @@ def run(
         runner.checkpoint_file,
         trials=trials,
         default_metric=metric,
-        default_mode=mode)
+        default_mode=mode,
+        sync_config=sync_config)
 
 
 @PublicAPI

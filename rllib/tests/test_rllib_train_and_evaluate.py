@@ -30,14 +30,15 @@ def evaluate_test(algo, env="CartPole-v0", test_episode_rollout=False):
         rllib_dir = str(Path(__file__).parent.parent.absolute())
         print("RLlib dir = {}\nexists={}".format(rllib_dir,
                                                  os.path.exists(rllib_dir)))
-        os.system("python {}/train.py --local-dir={} --run={} "
-                  "--checkpoint-freq=1 ".format(rllib_dir, tmp_dir, algo) +
-                  "--config='{" + "\"num_workers\": 1, \"num_gpus\": 0{}{}".
-                  format(fw_, extra_config) +
-                  ", \"timesteps_per_iteration\": 5,\"min_iter_time_s\": 0.1, "
-                  "\"model\": {\"fcnet_hiddens\": [10]}"
-                  "}' --stop='{\"training_iteration\": 1}'" +
-                  " --env={} --no-ray-ui".format(env))
+        os.system(
+            "python {}/train.py --local-dir={} --run={} "
+            "--checkpoint-freq=1 ".format(rllib_dir, tmp_dir, algo) +
+            "--config='{" + "\"num_workers\": 1, \"num_gpus\": 0{}{}".format(
+                fw_, extra_config) +
+            ", \"timesteps_per_iteration\": 5,\"min_time_s_per_reporting\": 0.1, "
+            "\"model\": {\"fcnet_hiddens\": [10]}"
+            "}' --stop='{\"training_iteration\": 1}'" +
+            " --env={} --no-ray-ui".format(env))
 
         checkpoint_path = os.popen("ls {}/default/*/checkpoint_000001/"
                                    "checkpoint-1".format(tmp_dir)).read()[:-1]
@@ -194,7 +195,7 @@ def learn_test_multi_agent_plus_evaluate(algo):
 
         # Test rolling out n steps.
         result = os.popen(
-            "python {}/rollout.py --run={} "
+            "python {}/evaluate.py --run={} "
             "--steps=400 "
             "--out=\"{}/rollouts_n_steps.pkl\" --no-render \"{}\"".format(
                 rllib_dir, algo, tmp_dir, last_checkpoint)).read()[:-1]

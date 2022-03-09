@@ -10,6 +10,7 @@ import io.ray.api.function.PyActorClass;
 import io.ray.api.function.PyActorMethod;
 import io.ray.api.function.PyFunction;
 import io.ray.api.function.RayFunc;
+import io.ray.api.function.RayFuncR;
 import io.ray.api.id.ActorId;
 import io.ray.api.id.PlacementGroupId;
 import io.ray.api.options.ActorCreationOptions;
@@ -65,6 +66,24 @@ public interface RayRuntime {
    * @return A list of Java objects.
    */
   <T> List<T> get(List<ObjectRef<T>> objectRefs);
+
+  /**
+   * Get an object from the object store.
+   *
+   * @param objectRef The reference of the object to get.
+   * @param timeoutMs The maximum amount of time in millseconds to wait before returning.
+   * @return The Java object.
+   */
+  <T> T get(ObjectRef<T> objectRef, long timeoutMs);
+
+  /**
+   * Get a list of objects from the object store.
+   *
+   * @param objectRefs The list of object references.
+   * @param timeoutMs The maximum amount of time in millseconds to wait before returning.
+   * @return A list of Java objects.
+   */
+  <T> List<T> get(List<ObjectRef<T>> objectRefs, long timeoutMs);
 
   /**
    * Wait for a list of RayObjects to be available, until specified number of objects are ready, or
@@ -259,4 +278,6 @@ public interface RayRuntime {
 
   /** Create concurrency group instance at runtime. */
   ConcurrencyGroup createConcurrencyGroup(String name, int maxConcurrency, List<RayFunc> funcs);
+
+  List<ConcurrencyGroup> extractConcurrencyGroups(RayFuncR<?> actorConstructorLambda);
 }
