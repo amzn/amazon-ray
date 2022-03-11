@@ -75,7 +75,8 @@ class AwsEventManager:
                 event.name, sns_topic_arn))
         except ClientError as exc:
             cli_logger.abort(
-                "Failed to execute callback for create cluster events: {}", exc)
+                "{} Error caught when publishing {} create cluster events to SNS",
+                exc.response["Error"], event.name)
 
     def _lambda_callback(self):
         raise NotImplementedError("AWS Lambda callback is currently not supported")

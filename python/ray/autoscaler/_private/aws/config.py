@@ -11,7 +11,6 @@ import logging
 
 import boto3
 import botocore
-from botocore.exceptions import ClientError
 from ray.autoscaler._private.aws.events import AwsEventManager
 from ray.autoscaler._private.util import check_legacy_fields
 from ray.autoscaler.tags import NODE_TYPE_LEGACY_HEAD, NODE_TYPE_LEGACY_WORKER
