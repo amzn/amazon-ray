@@ -12,7 +12,6 @@ mock
 numpy
 opencv-python-headless==4.3.0.36
 pandas
-pillow
 pydantic
 pygments
 pyyaml
