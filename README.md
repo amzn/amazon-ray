@@ -7,5 +7,6 @@ to any subsequent contribution back to the [Ray Project](https://github.com/ray-
 
 **Do not take production dependencies on Amazon-Ray**
 
-##Launching Ray clusters on AWS
+## Launching Ray clusters on AWS
+
 Please follow the guidelines on [Ray docs](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html).
